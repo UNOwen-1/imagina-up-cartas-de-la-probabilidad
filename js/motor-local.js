@@ -4,39 +4,44 @@
 (function () {
   "use strict";
 
-  // Catálogo de habilidades: nombre, tipo, patrones (sin acentos, en minúsculas) y una sugerencia para aprenderla.
+  // Catálogo de habilidades para ciencias computacionales: nombre, tipo, patrones (sin acentos, en minúsculas)
+  // que el Perfilador busca en la historia, y una sugerencia gratuita para aprenderla.
   const CATALOGO = [
-    { nombre: "Atención al cliente", categoria: "blanda", patrones: ["client", "atiend", "atender", "atencion", "mostrador"], curso: "Curso gratuito en línea de servicio al cliente (3–4 horas) y practica con un familiar el saludo y la despedida." },
-    { nombre: "Ventas", categoria: "blanda", patrones: ["vend", "ventas", " venta", "comision"], curso: "Video-curso gratuito de técnicas de venta básicas; practica cómo presentar un producto en 30 segundos." },
-    { nombre: "Marketing digital", categoria: "técnica", patrones: ["redes", "instagram", "tiktok", "facebook", "marketing", "publicidad", "anuncio", "seguidores"], curso: "Certificado gratuito de fundamentos de marketing digital (hay varios en plataformas abiertas)." },
-    { nombre: "Creación de contenido", categoria: "técnica", patrones: ["video", "reels", "contenido", "youtube", "publicaciones", "publico", "stream"], curso: "Crea 3 publicaciones de ejemplo para un negocio real y guárdalas como portafolio." },
-    { nombre: "Fotografía y video", categoria: "técnica", patrones: ["foto", "camara", "edito", "editar", "capcut", "grabo", "grabar"], curso: "Tutorial gratuito de edición de video en celular; arma un mini portafolio de 3 videos." },
-    { nombre: "Excel", categoria: "técnica", patrones: ["excel", "hoja de calculo", "hojas de calculo", "sheets"], curso: "Curso gratuito de Excel básico: fórmulas SUMA, PROMEDIO, filtros y tablas (4–6 horas)." },
-    { nombre: "Control de inventario", categoria: "técnica", patrones: ["inventario", "almacen", "stock", "mercancia", "surtir", "surto"], curso: "Aprende conceptos básicos de inventario: entradas, salidas y conteo físico." },
-    { nombre: "Manejo de efectivo", categoria: "técnica", patrones: ["caja", "cobr", "efectivo", "dar cambio", "corte de"], curso: "Practica cortes de caja y cuadre de efectivo con un ejercicio en Excel." },
-    { nombre: "Organización de eventos", categoria: "blanda", patrones: ["evento", "fiesta", "kermes", "torneo", "boda", "xv "], curso: "Planea un evento pequeño (cumpleaños, torneo) con presupuesto y lista de tareas." },
-    { nombre: "Organización", categoria: "blanda", patrones: ["organiz", "agenda", "planeo", "planear", "ordeno", "acomodo"], curso: "Usa una herramienta gratuita de tareas (tablero Kanban) para organizar tu semana." },
-    { nombre: "Trabajo en equipo", categoria: "blanda", patrones: ["equipo", "en grupo", "mi grupo", "junto con", "companer", "entre todos"], curso: "Participa en un proyecto grupal o voluntariado y anota tu rol y resultados." },
-    { nombre: "Liderazgo", categoria: "blanda", patrones: ["capitan", "lider", "coordin", "encargad", "jefe de grupo", "represent", "dirig"], curso: "Toma un rol de coordinación en un proyecto escolar o comunitario." },
-    { nombre: "Comunicación", categoria: "blanda", patrones: ["explic", "convenc", "platic", "hablar con", "hablo con", "negocie", "negociar"], curso: "Practica explicar algo complejo en 1 minuto y grábate para mejorar." },
-    { nombre: "Enseñanza", categoria: "blanda", patrones: ["ensen", "clases", "tutor", "asesor", "regulariz", "tareas", "tarea a"], curso: "Ofrece una asesoría gratuita a un compañero y pide retroalimentación." },
-    { nombre: "Programación", categoria: "técnica", patrones: ["program", "codigo", "python", "javascript", "html", "pagina web", "paginas web", "app "], curso: "Curso gratuito de HTML, CSS y JavaScript; publica una página sencilla como portafolio." },
-    { nombre: "Diseño gráfico", categoria: "técnica", patrones: ["disen", "canva", "photoshop", "logo", "ilustr", "flyer", "cartel"], curso: "Rediseña 3 carteles de negocios locales con una herramienta gratuita de diseño." },
-    { nombre: "Inglés", categoria: "técnica", patrones: ["ingles", "english"], curso: "Practica 15 minutos diarios con una app gratuita de idiomas y busca un club de conversación." },
-    { nombre: "Logística y reparto", categoria: "técnica", patrones: ["repart", "entreg", "mandado", "envio", "paquete", "moto", "bici"], curso: "Aprende a planear rutas con mapas en línea y a registrar entregas." },
-    { nombre: "Puntualidad", categoria: "blanda", patrones: ["temprano", "puntual", "todos los dias", "diario", "cada manana"], curso: "Menciona en tu entrevista un compromiso que has cumplido de forma constante." },
-    { nombre: "Preparación de alimentos", categoria: "técnica", patrones: ["cocin", "comida", "tacos", "postre", "panader", "reposter", "restaurante", "mesero", "pasteles"], curso: "Tramita un curso gratuito de manejo higiénico de alimentos." },
-    { nombre: "Soporte técnico", categoria: "técnica", patrones: ["arregl", "reparar", "reparo", "compu", "celular", "instal", "formate", "tecnico"], curso: "Curso gratuito de fundamentos de soporte de TI (hardware, redes y sistemas)." },
-    { nombre: "Redacción", categoria: "técnica", patrones: ["escrib", "redact", "blog", "articulo", "ensayo", "correos"], curso: "Escribe 3 textos cortos (correo formal, descripción de producto, post) como portafolio." },
-    { nombre: "Presentaciones", categoria: "blanda", patrones: ["presentacion", "exposicion", "expuse", "expongo", "diapositiva"], curso: "Prepara una presentación de 5 diapositivas sobre un tema que domines." },
-    { nombre: "Gestión de pedidos", categoria: "técnica", patrones: ["pedido", "whatsapp", "encargo", "ordenes"], curso: "Organiza pedidos en una hoja de cálculo con estado: pendiente, enviado, entregado." },
-    { nombre: "Responsabilidad", categoria: "blanda", patrones: ["cuido", "cuidar", "responsab", "me encargo", "estoy a cargo", "me hago cargo"], curso: "Menciona en tu CV una responsabilidad que tengas de forma continua y su resultado." },
-    { nombre: "Cuidado de personas", categoria: "blanda", patrones: ["cuido a", "cuidar a", "abuel", "bebe", "adulto mayor", "adultos mayores"], curso: "Curso gratuito de primeros auxilios básicos." },
-    { nombre: "Compromiso social", categoria: "blanda", patrones: ["voluntari", "iglesia", "comunidad", "ong", "donacion", "colecta", "brigada"], curso: "Registra tus horas de voluntariado y pide una constancia." },
-    { nombre: "Análisis de datos", categoria: "técnica", patrones: ["datos", "estadistic", "grafica", "encuesta", "reporte", "metricas"], curso: "Curso gratuito de introducción al análisis de datos con hojas de cálculo." },
-    { nombre: "Resolución de problemas", categoria: "blanda", patrones: ["resolv", "solucion", "problema", "queja"], curso: "Prepara 2 ejemplos de problemas que resolviste usando el método: situación, acción, resultado." },
-    { nombre: "Aprendizaje rápido", categoria: "blanda", patrones: ["aprend", "autodidact", "tutorial", "por mi cuenta", "curso"], curso: "Toma un curso corto gratuito y termina con un certificado o proyecto." },
-    { nombre: "Creatividad", categoria: "blanda", patrones: ["creativ", "manualidad", "dibuj", "pint", "musica", "invent"], curso: "Arma un portafolio con 3 trabajos creativos que hayas hecho." }
+    // --- Técnicas ---
+    { nombre: "Python", categoria: "técnica", patrones: ["python", "django", "flask", "fastapi", "pandas", "numpy", "jupyter"], curso: "Resuelve ejercicios de Python en Exercism y publica en GitHub un proyecto pequeño con README y pruebas." },
+    { nombre: "Java", categoria: "técnica", patrones: ["java ", "java,", "java.", "java)", "en java", "spring", "kotlin", "jvm"], curso: "Repasa POO y colecciones con la documentación oficial de Java y arma una API sencilla con Spring Boot." },
+    { nombre: "JavaScript", categoria: "técnica", patrones: ["javascript", "node", "express", " js ", "js,", "ecmascript"], curso: "Completa la ruta de JavaScript de freeCodeCamp o The Odin Project y publica un proyecto en GitHub Pages." },
+    { nombre: "TypeScript", categoria: "técnica", patrones: ["typescript"], curso: "Lee el handbook oficial de TypeScript y migra a TypeScript un proyecto tuyo de JavaScript." },
+    { nombre: "C/C++", categoria: "técnica", patrones: ["c++", "cpp", "lenguaje c ", "lenguaje c,", " en c ", "c/c++", "unreal", "arduino", "embebid"], curso: "Practica punteros, memoria y STL resolviendo problemas en Codeforces o Exercism en C++." },
+    { nombre: "C# y .NET", categoria: "técnica", patrones: ["c#", ".net", "csharp", "unity"], curso: "Sigue los tutoriales gratuitos de Microsoft Learn de C# y crea una API mínima con ASP.NET Core." },
+    { nombre: "SQL", categoria: "técnica", patrones: ["sql", "mysql", "postgres", "base de datos", "bases de datos", "consulta", "sqlite", "oracle"], curso: "Practica consultas con JOIN, GROUP BY y subconsultas en SQLBolt o con un dataset público en PostgreSQL." },
+    { nombre: "Git y GitHub", categoria: "técnica", patrones: ["git ", "git,", "git.", "github", "gitlab", "pull request", "control de versiones", "repositorio", "commit"], curso: "Haz el curso interactivo Learn Git Branching y contribuye con un pull request a un proyecto de código abierto." },
+    { nombre: "Estructuras de datos y algoritmos", categoria: "técnica", patrones: ["algoritm", "estructuras de datos", "estructura de datos", "leetcode", "icpc", "programacion competitiva", "codeforces", "omegaup", "olimpiada de informatica", "hackerrank", "complejidad"], curso: "Resuelve 2 problemas al día en LeetCode o Codeforces y repasa complejidad (Big O) con CS50." },
+    { nombre: "Desarrollo web frontend", categoria: "técnica", patrones: ["react", "angular", "vue.js", "vuejs", " vue ", "frontend", "front-end", "html", "css", "pagina web", "paginas web", "sitio web", "tailwind", "interfaz web"], curso: "Construye un proyecto en React con buenas prácticas de accesibilidad y despliégalo gratis (Netlify o GitHub Pages)." },
+    { nombre: "Desarrollo backend y APIs", categoria: "técnica", patrones: ["backend", "back-end", " api", "apis", "api rest", "restful", "endpoint", "microservicio", "graphql", "servidor web"], curso: "Diseña una API REST con autenticación, validaciones y documentación OpenAPI, y publícala en GitHub." },
+    { nombre: "Desarrollo móvil", categoria: "técnica", patrones: ["android", " ios", "ios ", "swift", "flutter", "react native", "app movil", "aplicacion movil", "apps moviles"], curso: "Sigue el curso gratuito de Android (Kotlin) de Google o el codelab de Flutter y publica una app sencilla." },
+    { nombre: "Docker y contenedores", categoria: "técnica", patrones: ["docker", "contenedor", "kubernetes", "k8s", "compose"], curso: "Conteneriza uno de tus proyectos con Docker y docker-compose siguiendo la guía oficial «Get started»." },
+    { nombre: "Nube (AWS/Azure/GCP)", categoria: "técnica", patrones: ["aws", "azure", "gcp", "google cloud", "nube", "cloud", "lambda", "firebase", "ec2", "s3"], curso: "Toma los cursos gratuitos de fundamentos en AWS Skill Builder o Microsoft Learn y despliega un proyecto en la capa gratuita." },
+    { nombre: "Linux y terminal", categoria: "técnica", patrones: ["linux", "bash", "terminal", "ubuntu", "shell", "consola", "ssh"], curso: "Practica comandos y permisos con los juegos de OverTheWire (Bandit) y automatiza una tarea con un script de Bash." },
+    { nombre: "Pruebas de software", categoria: "técnica", patrones: ["prueba", "testing", "pytest", "junit", "jest", "selenium", "cypress", "unitari", " qa", "tdd", "cobertura"], curso: "Agrega pruebas unitarias (pytest o Jest) a un proyecto tuyo y mide la cobertura." },
+    { nombre: "Machine Learning", categoria: "técnica", patrones: ["machine learning", "aprendizaje automatico", "red neuronal", "redes neuronales", "scikit", "tensorflow", "pytorch", "clasific", "regresion", "deep learning", "nlp", "vision por computadora", "modelo de ia", "inteligencia artificial", "random forest"], curso: "Haz los cursos gratuitos de Kaggle Learn y publica un notebook con un modelo y su evaluación." },
+    { nombre: "Análisis de datos", categoria: "técnica", patrones: ["analisis de datos", "ciencia de datos", "dataset", "dashboard", "tablero", "power bi", "tableau", "estadistic", "visualiz", "metricas", "excel"], curso: "Analiza un dataset público (datos.gob.mx o Kaggle) y publica un tablero en Power BI o Looker Studio con tus conclusiones." },
+    { nombre: "Ciberseguridad", categoria: "técnica", patrones: ["segurid", "ciberseg", "pentest", "vulnerab", "ctf", "owasp", "cifrado", "criptograf", "hacking etico"], curso: "Practica en TryHackMe (rutas gratuitas) o en CTF para principiantes y estudia el OWASP Top 10." },
+    { nombre: "Redes y soporte técnico", categoria: "técnica", patrones: ["redes de computadoras", "tcp", "cisco", "ccna", "soporte tecnico", "mesa de ayuda", "help desk", "infraestructura", "router", "configure equipos"], curso: "Toma un curso introductorio gratuito de Cisco Networking Academy y practica con Packet Tracer." },
+    { nombre: "CI/CD y DevOps", categoria: "técnica", patrones: ["ci/cd", "github actions", "jenkins", "pipeline", "devops", "despliegue", "deploy", "desplegu", "terraform", "integracion continua"], curso: "Configura GitHub Actions en un proyecto tuyo para correr pruebas y desplegar automáticamente." },
+    { nombre: "Inglés técnico", categoria: "técnica", patrones: ["ingles", "english", "toefl", "documentacion en ingles"], curso: "Lee documentación oficial en inglés a diario y practica explicar tus proyectos en inglés en voz alta (5 minutos)." },
+    { nombre: "Metodologías ágiles (Scrum)", categoria: "técnica", patrones: ["scrum", "agil", "sprint", "kanban", "jira", "trello", "daily"], curso: "Lee la Guía Scrum oficial (gratuita) y organiza tu próximo proyecto en sprints con un tablero Kanban." },
+    // --- Blandas ---
+    { nombre: "Trabajo en equipo", categoria: "blanda", patrones: ["equipo", "en grupo", "colabor", "companer", "junto con", "entre todos"], curso: "Participa en un hackatón o en un proyecto de código abierto y anota tu rol y lo que aportaste." },
+    { nombre: "Comunicación", categoria: "blanda", patrones: ["expuse", "exposicion", "presente", "presentacion", "explic", "document", "conferencia", "platica", "redacte"], curso: "Escribe un post técnico sobre un proyecto tuyo y practica explicarlo en 2 minutos a alguien no técnico." },
+    { nombre: "Resolución de problemas", categoria: "blanda", patrones: ["resolv", "solucion", "bug", "depur", "debug", "problema", "optimic", "corregi"], curso: "Prepara 2 ejemplos de bugs o problemas que resolviste con el método situación–acción–resultado." },
+    { nombre: "Aprendizaje rápido", categoria: "blanda", patrones: ["aprend", "autodidact", "curso", "por mi cuenta", "certific", "tutorial", "coursera", "edx", "platzi"], curso: "Termina un curso corto gratuito con proyecto final y agrégalo a tu portafolio." },
+    { nombre: "Liderazgo", categoria: "blanda", patrones: ["lider", "coordin", "capitan", "jefe de", "dirig", "presidente", "encargad"], curso: "Toma el rol de líder técnico en un proyecto escolar o hackatón y documenta cómo repartiste el trabajo." },
+    { nombre: "Enseñanza y mentoría", categoria: "blanda", patrones: ["ensen", "tutorias", "soy tutor", "tutor de", "tutora de", "asesor", "mentor", "coach", "doy clases", "di clases", "ayudante de profesor"], curso: "Da una asesoría o taller a compañeros de semestres anteriores y pide retroalimentación." },
+    { nombre: "Gestión del tiempo", categoria: "blanda", patrones: ["fecha limite", "deadline", "al mismo tiempo", "mientras estudio", "medio tiempo", "entregas", "a la par"], curso: "Planea tu semana con bloques de tiempo y un tablero de tareas; mide cuánto te tomó cada entrega." },
+    { nombre: "Pensamiento analítico", categoria: "blanda", patrones: ["analic", "matemat", "logica", "razonamiento", "investigacion", "tesis"], curso: "Resuelve acertijos lógicos y problemas de matemáticas discretas; explica por escrito tu razonamiento." },
+    { nombre: "Creatividad", categoria: "blanda", patrones: ["creativ", "innov", "hackat", "disen"], curso: "Propón y prototipa en un fin de semana una solución tecnológica a un problema de tu comunidad." },
+    { nombre: "Compromiso social", categoria: "blanda", patrones: ["voluntari", "servicio social", "comunidad", "ong", "sin fines de lucro"], curso: "Ofrece tus habilidades a una organización sin fines de lucro (por ejemplo, un sitio web o una base de datos)." }
   ];
 
   const porNombre = {};
@@ -60,14 +65,17 @@
 
   // Minúsculas para usar un nombre de habilidad dentro de una frase (respeta nombres propios).
   function enFrase(nombre) {
-    return /^(Excel|Inglés)$/.test(nombre) ? nombre : nombre.toLowerCase();
+    // Lenguajes y tecnologías conservan su escritura (Python, SQL, Git…); en lo demás solo la primera letra
+    // pasa a minúscula, para respetar siglas como APIs o AWS ("desarrollo backend y APIs").
+    if (/^(Python|Java|JavaScript|TypeScript|C\/C\+\+|C# y \.NET|SQL|Git|Docker|Linux|Machine|Inglés|CI\/CD)/.test(nombre)) return nombre;
+    return nombre.charAt(0).toLowerCase() + nombre.slice(1);
   }
 
   // Elige la habilidad del perfil más relevante para la vacante (o la primera).
   function habilidadClave(perfil, vacante) {
     const requeridas = vacante.habilidades.map(normalizar);
     return perfil.habilidades.find(function (h) { return requeridas.indexOf(normalizar(h.nombre)) !== -1; }) ||
-      perfil.habilidades[0] || { nombre: "Responsabilidad", evidencia: "Busco mi primer empleo con muchas ganas de aprender" };
+      perfil.habilidades[0] || { nombre: "Aprendizaje rápido", evidencia: "Busco mi primera oportunidad en tecnología con muchas ganas de aprender" };
   }
 
   function lista(items) {
@@ -87,25 +95,25 @@
       if (frag) encontradas.push({ nombre: h.nombre, categoria: h.categoria, evidencia: recortar(frag, 110) });
     });
 
-    // Prioriza habilidades técnicas y limita a 8 para que el CV sea claro.
-    const orden = { "técnica": 0, "blanda": 1 };
-    encontradas.sort(function (a, b) { return orden[a.categoria] - orden[b.categoria]; });
-    let habilidades = encontradas.slice(0, 10);
+    // Hasta 7 técnicas y 3 blandas (las técnicas primero) para que el CV sea claro y equilibrado.
+    const tecnicas = encontradas.filter(function (h) { return h.categoria === "técnica"; });
+    const blandas = encontradas.filter(function (h) { return h.categoria === "blanda"; });
+    const nBlandas = Math.min(blandas.length, 3, Math.max(10 - tecnicas.length, 3));
+    let habilidades = tecnicas.slice(0, 10 - nBlandas).concat(blandas.slice(0, nBlandas));
 
     if (habilidades.length < 2) {
       const primera = partes[0] ? recortar(partes[0], 110) : "Lo contaste en tu historia";
-      habilidades.push({ nombre: "Responsabilidad", categoria: "blanda", evidencia: primera });
-      habilidades.push({ nombre: "Aprendizaje rápido", categoria: "blanda", evidencia: "Estás buscando activamente tu primer empleo y preparándote" });
+      habilidades.push({ nombre: "Resolución de problemas", categoria: "blanda", evidencia: primera });
+      habilidades.push({ nombre: "Aprendizaje rápido", categoria: "blanda", evidencia: "Estás buscando activamente tu primera oportunidad en tecnología y preparándote" });
       habilidades = habilidades.filter(function (h, i, arr) {
         return arr.findIndex(function (x) { return x.nombre === h.nombre; }) === i;
       });
     }
 
     const top = habilidades.slice(0, 3).map(function (h) { return enFrase(h.nombre); });
-    const edad = datos.edad ? datos.edad + " años, " : "";
     const resumen =
-      "Persona joven (" + edad + "sin experiencia formal) con experiencia práctica en " + lista(top) +
-      ". Aprende rápido, es constante y busca su primer empleo formal para aportar lo que ya sabe hacer y seguir creciendo.";
+      "Perfil en ciencias computacionales" + (datos.edad ? " (" + datos.edad + " años)" : "") + " con experiencia práctica en " + lista(top) +
+      ", desarrollada en proyectos académicos, prácticas y proyectos personales. Busca su primera oportunidad profesional en tecnología para aportar y seguir creciendo.";
 
     return {
       nombre: datos.nombre || "Tu nombre",
@@ -144,7 +152,7 @@
           compatibilidad: e.compatibilidad,
           por_que: porQue,
           te_falta: falta ? falta : "¡Nada! Cumples con todo lo que piden.",
-          consejo: info ? info.curso : "Prepara un ejemplo concreto de cada habilidad para la entrevista."
+          consejo: info ? info.curso : "Prepara un proyecto o ejemplo concreto de cada habilidad para la entrevista técnica."
         };
       })
     };
@@ -164,16 +172,22 @@
     const resumen =
       "Perfil para el puesto de " + v.puesto + " en " + v.empresa + ". Cuento con experiencia práctica en " +
       lista(claves.map(function (h) { return enFrase(h.nombre); })) +
-      ", que he desarrollado en situaciones reales. Me interesa aportar en un equipo como el suyo, aprender rápido y crecer con la empresa.";
+      ", que he aplicado en proyectos académicos, prácticas y proyectos personales. Me interesa sumarme a su equipo, aprender de código en producción y crecer como ingeniero(a) de software.";
 
-    const logros = ordenadas.slice(0, 4).map(function (h) {
-      return h.nombre + ": " + h.evidencia.charAt(0).toUpperCase() + h.evidencia.slice(1);
+    // Una viñeta por evidencia: si varias habilidades salen de la misma frase, se nombran juntas.
+    const grupos = [];
+    ordenadas.forEach(function (h) {
+      const g = grupos.find(function (x) { return x.evidencia === h.evidencia; });
+      if (g) g.nombres.push(h.nombre); else grupos.push({ evidencia: h.evidencia, nombres: [h.nombre] });
+    });
+    const logros = grupos.slice(0, 4).map(function (g) {
+      return lista(g.nombres) + ": " + g.evidencia.charAt(0).toUpperCase() + g.evidencia.slice(1);
     });
 
     const cambios = [
       "Puse primero las habilidades que pide la vacante (" + (relevantes.map(function (h) { return h.nombre; }).join(", ") || "las más cercanas al puesto") + ").",
       "Reescribí tu resumen mencionando el puesto y la empresa.",
-      "Convertí tus experiencias informales en logros concretos con evidencia."
+      "Convertí tus proyectos y experiencias en logros concretos con evidencia."
     ];
     const faltan = v.habilidades.filter(function (h) {
       return !perfil.habilidades.some(function (p) { return normalizar(p.nombre) === normalizar(h); });
@@ -192,20 +206,21 @@
   // Banco de preguntas para la simulación: una de cada tipo, elegidas al azar para que cada intento sea distinto.
   const BANCO_SIMULACION = {
     presentacion: [
-      { pregunta: "Para empezar, háblame de ti: ¿quién eres y por qué te postulas como {puesto}?", que_busca: "Que te presentes con seguridad en 1 minuto y conectes tu historia con el puesto." },
-      { pregunta: "¿Qué sabes de {empresa} y por qué te gustaría trabajar con nosotros?", que_busca: "Que hayas investigado la empresa y tengas un motivo real para elegirla." },
-      { pregunta: "Si tuvieras que describirte en tres palabras, ¿cuáles serían y por qué?", que_busca: "Autoconocimiento y que respaldes cada palabra con un ejemplo." }
+      { pregunta: "Para empezar, háblame de ti: ¿qué estudias o estudiaste y por qué te postulas como {puesto}?", que_busca: "Que te presentes con seguridad en 1 minuto y conectes tu formación y tus proyectos con el puesto." },
+      { pregunta: "¿Qué sabes de {empresa} y por qué te gustaría trabajar con nosotros?", que_busca: "Que hayas investigado la empresa, su producto y su tecnología, y tengas un motivo real." },
+      { pregunta: "Cuéntame del proyecto que más te enorgullece: ¿qué construiste y qué decisiones técnicas tomaste?", que_busca: "Profundidad técnica: qué hiciste tú, por qué elegiste esa tecnología y qué aprendiste." }
     ],
     experiencia: [
-      { pregunta: "¿Cuál dirías que es tu mayor fortaleza para este puesto? Dame un ejemplo de cuándo la usaste.", que_busca: "Una fortaleza relevante demostrada con una situación real y su resultado." },
-      { pregunta: "Cuéntame de una vez que trabajaste en equipo para lograr algo. ¿Cuál fue tu papel?", que_busca: "Colaboración: qué aportaste tú, cómo te coordinaste y qué lograron." },
-      { pregunta: "Háblame de un reto o problema que hayas resuelto, en la escuela, tu casa o un negocio. ¿Qué hiciste?", que_busca: "Iniciativa y forma de resolver problemas, con un resultado concreto." },
-      { pregunta: "¿Qué es algo que estés mejorando de ti y qué estás haciendo para lograrlo?", que_busca: "Honestidad y madurez: reconocer un área de mejora y un plan para trabajarla." }
+      { pregunta: "Cuéntame de un bug difícil que hayas resuelto. ¿Cómo encontraste la causa?", que_busca: "Método de depuración: reproducir, aislar, probar hipótesis y verificar la solución." },
+      { pregunta: "Háblame de un proyecto en equipo: ¿cómo se organizaron con Git y qué parte hiciste tú?", que_busca: "Colaboración técnica: ramas, pull requests, code review y tu aporte concreto." },
+      { pregunta: "¿Cómo aprendiste la última tecnología que usaste en un proyecto?", que_busca: "Aprendizaje autodidacta: fuentes, práctica y cómo lo aplicaste." },
+      { pregunta: "¿Cuál es tu mayor fortaleza técnica y qué estás mejorando ahora mismo?", que_busca: "Autoconocimiento con ejemplos y un plan concreto para tu área de mejora." }
     ],
     situacional: [
-      { pregunta: "Imagina que en tu primera semana en {empresa} tienes varias tareas urgentes al mismo tiempo. ¿Cómo decides qué hacer primero?", que_busca: "Organización, criterio para priorizar y saber pedir apoyo." },
-      { pregunta: "Un cliente o compañero se molesta contigo por un error que no fue tuyo. ¿Qué haces?", que_busca: "Manejo de emociones, empatía y enfoque en la solución." },
-      { pregunta: "Te piden algo que nunca has hecho y tu jefe no está disponible. ¿Cómo lo resuelves?", que_busca: "Iniciativa, aprendizaje rápido y responsabilidad para avisar y preguntar." }
+      { pregunta: "Imagina que tu código funciona en tu computadora pero falla en producción en {empresa}. ¿Qué pasos sigues?", que_busca: "Razonamiento ordenado: revisar logs, diferencias de entorno, reproducir y comunicar al equipo." },
+      { pregunta: "¿Cómo le explicarías qué es una API a alguien del área de negocio que no es técnico?", que_busca: "Comunicación técnica clara, con analogías y sin jerga innecesaria." },
+      { pregunta: "Te asignan una tarea con requisitos poco claros y una fecha de entrega cercana. ¿Qué haces?", que_busca: "Que aclares requisitos, propongas un alcance mínimo y avises riesgos a tiempo." },
+      { pregunta: "Un compañero revisa tu pull request y te pide muchos cambios. ¿Cómo lo manejas?", que_busca: "Apertura a la retroalimentación, profesionalismo y aprendizaje en el code review." }
     ]
   };
 
@@ -227,8 +242,8 @@
     return {
       preguntas: [
         { pregunta: "¿Por qué te interesa el puesto de " + v.puesto + " en " + v.empresa + "?", que_busca: "Que conozcas el puesto y tengas motivación real, no solo necesidad." },
-        { pregunta: "Cuéntame de una situación real en la que usaste tu habilidad de " + h + ". ¿Qué hiciste y qué resultado tuviste?", que_busca: "Un ejemplo concreto: situación, lo que hiciste y el resultado." },
-        { pregunta: "Este es tu primer empleo formal. Si te piden algo que no sabes hacer, ¿cómo lo resuelves?", que_busca: "Actitud de aprendizaje, iniciativa y que sepas pedir ayuda." }
+        { pregunta: "Cuéntame de un proyecto en el que usaste " + h + ". ¿Qué hiciste tú y cuál fue el resultado?", que_busca: "Un ejemplo técnico concreto: la situación, tus decisiones y el resultado (de preferencia medible)." },
+        { pregunta: "Es tu primer trabajo en tecnología y te asignan una tarea con una herramienta que nunca has usado. ¿Cómo la resuelves?", que_busca: "Aprendizaje autónomo: documentación, pruebas pequeñas y saber cuándo pedir ayuda al equipo." }
       ]
     };
   }
@@ -240,11 +255,11 @@
     const n = normalizar(r);
     return {
       palabras: r ? r.split(/\s+/).length : 0,
-      tieneEjemplo: /(una vez|por ejemplo|cuando |el ano pasado|en mi |me toco|tuve que)/.test(n),
-      tieneResultado: /(logr|result|aument|mejor|consegu|gracias a|termin|\d)/.test(n),
+      tieneEjemplo: /(una vez|por ejemplo|cuando |el ano pasado|en mi |me toco|tuve que|en el hackat|en mis practicas|durante )/.test(n),
+      tieneResultado: /(logr|result|aument|mejor|consegu|gracias a|termin|redu|optimi|desplegu|public|\d)/.test(n),
       mencionaPuesto: n.indexOf(normalizar(vacante.empresa).split(" ")[0]) !== -1 ||
         n.indexOf(normalizar(vacante.puesto).split(" ")[0]) !== -1,
-      actitud: /(aprend|pregunt|investig|practic|me esfuerz|ganas)/.test(n)
+      actitud: /(aprend|pregunt|investig|practic|me esfuerz|ganas|document|retroaliment)/.test(n)
     };
   }
 
@@ -305,18 +320,18 @@
     if (cuenta("tieneEjemplo") >= 2) fortalezas.push("Respaldaste tus respuestas con ejemplos reales en " + cuenta("tieneEjemplo") + " de " + total + " preguntas.");
     if (cuenta("tieneResultado") >= 2) fortalezas.push("Cerraste con resultados concretos: eso hace creíble lo que dices.");
     if (cuenta("mencionaPuesto") >= 1) fortalezas.push("Conectaste tus respuestas con " + v.empresa + " y el puesto.");
-    if (cuenta("actitud") >= 1) fortalezas.push("Mostraste ganas de aprender, algo que las empresas valoran mucho en un primer empleo.");
+    if (cuenta("actitud") >= 1) fortalezas.push("Mostraste ganas de aprender, algo que los equipos de tecnología valoran mucho en perfiles junior.");
     if (promPalabras >= 35 && promPalabras <= 160) fortalezas.push("Tus respuestas tuvieron una buena extensión (unas " + promPalabras + " palabras en promedio).");
     if (!fortalezas.length) fortalezas.push("Completaste la simulación de principio a fin: practicar así ya te da ventaja sobre quien llega sin prepararse.");
 
     const mejoras = [];
     if (promPalabras < 30) mejoras.push("Desarrolla más tus respuestas: promediaste " + promPalabras + " palabras. Apunta a 40–100 (entre 30 segundos y 1 minuto hablando).");
     if (promPalabras > 160) mejoras.push("Sé más concreto: tus respuestas fueron largas. Ve directo a la situación, lo que hiciste y el resultado.");
-    if (cuenta("tieneEjemplo") < 2) mejoras.push("Usa el método SAR: cuenta una Situación real, la Acción que tomaste tú y el Resultado. Empieza con «Una vez, en…».");
-    if (cuenta("tieneResultado") < 2) mejoras.push("Termina cada historia con un resultado o aprendizaje, de preferencia con un número («atendí a más de 30 clientes al día»).");
+    if (cuenta("tieneEjemplo") < 2) mejoras.push("Usa el método SAR con tus proyectos: la Situación (qué había que resolver), la Acción técnica que tomaste tú y el Resultado. Empieza con «En mi proyecto de…».");
+    if (cuenta("tieneResultado") < 2) mejoras.push("Termina cada historia con un resultado medible o un aprendizaje («reduje el tiempo de respuesta de la API a la mitad»).");
     if (!cuenta("mencionaPuesto")) mejoras.push("Investiga " + v.empresa + " antes de la entrevista y menciona por qué te interesa ese lugar y el puesto de " + v.puesto + ".");
     if (!cuenta("actitud")) mejoras.push("Muestra tu disposición a aprender: di cómo te preparas o qué harías para aprender lo que aún no sabes.");
-    mejoras.push("Ensaya en voz alta y cuida tu lenguaje corporal: contacto visual, postura derecha y una sonrisa al saludar.");
+    mejoras.push("Ensaya en voz alta: explica tus proyectos como si los presentaras en una revisión técnica, y practica pensar en voz alta al resolver un problema.");
 
     const veredicto = calificacion >= 9 ? "¡Excelente! Llegarías a la entrevista con mucha seguridad."
       : calificacion >= 7 ? "¡Muy bien! Con un par de ajustes tus respuestas van a destacar."

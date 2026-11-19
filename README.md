@@ -1,6 +1,6 @@
-# 🚀 Despega: tu equipo de IA para conseguir tu primer empleo
+# 🚀 Despega: tu equipo de IA para tu primer empleo en tecnología
 
-> **Despega ayuda a jóvenes de 18 a 25 años sin experiencia formal a conseguir su primer empleo**, con un equipo de 4 agentes de IA que convierte lo que ya saben hacer en un CV, encuentra vacantes compatibles y los entrena para la entrevista.
+> **Despega ayuda a estudiantes y recién egresados de ciencias computacionales (sistemas, software, informática, IA, datos) a conseguir sus prácticas o su primer empleo en tecnología**, con un equipo de 4 agentes de IA que convierte sus proyectos, prácticas y hackatones en un CV técnico, encuentra vacantes compatibles con su stack y los entrena para la entrevista técnica.
 
 Proyecto de hackatón · MVP funcional en una página web local.
 
@@ -8,26 +8,24 @@ Proyecto de hackatón · MVP funcional en una página web local.
 
 ## El problema
 
-- Casi **1 de cada 5 jóvenes** en América Latina **ni estudia ni trabaja** (OIT, 19,3 %).
-- El desempleo juvenil en la región es de **11,9 %**, y **51,2 %** de los jóvenes que trabajan lo hacen en la informalidad (OIT, *Tendencias mundiales del empleo juvenil 2026*).
-- Muchos jóvenes **sí tienen habilidades** (ayudan en el negocio familiar, manejan redes sociales, organizan eventos), pero **no saben traducirlas** a lo que piden las empresas.
-
-> Nota: la OIT mide a los jóvenes de 15 a 24 años.
+- Muchas personas que estudian o acaban de egresar de computación **sí tienen experiencia**: proyectos escolares, prácticas, servicio social, hackatones, programación competitiva, código abierto o su tesis. Pero **no saben presentarla** como lo piden las vacantes ni qué puestos junior encajan con su stack.
+- Las vacantes de entrada (prácticas, becario, trainee, junior) piden cosas distintas según el sector y la empresa, y es difícil saber qué falta aprender y cómo demostrarlo.
+- Las entrevistas técnicas combinan preguntas de proyectos, de resolución de problemas y de trabajo en equipo; sin práctica, es fácil quedarse en blanco o programar en silencio.
 
 ## La solución: 4 agentes, tú decides
 
 | # | Agente | Qué hace | Momento "wow" |
 |---|---|---|---|
-| 1 | 🧭 **Perfilador** | Lee tu historia (texto o voz) y la convierte en habilidades profesionales | Cada habilidad muestra **la frase de tu historia de donde salió** |
-| 2 | 🔎 **Buscador** | Compara tu perfil con 30 vacantes y elige las 3 mejores | **% de compatibilidad**, por qué encajas y qué te falta |
+| 1 | 🧭 **Perfilador** | Lee tu historia (texto o voz) y la convierte en habilidades técnicas y blandas | Cada habilidad muestra **la frase de tu historia de donde salió** |
+| 2 | 🔎 **Buscador** | Compara tu perfil con 30 vacantes de tecnología y elige las 3 mejores | **% de compatibilidad**, por qué encajas y qué te falta |
 | 3 | ✍️ **Adaptador** | Reescribe tu CV para la vacante elegida | Comparación **antes / después** y CV en PDF |
-| 4 | 🎤 **Entrenador** | Te hace 3 preguntas de entrevista y evalúa tus respuestas | Entrevista **por voz** con calificación y respuesta de ejemplo |
+| 4 | 🎤 **Entrenador** | Te prepara para la entrevista técnica y evalúa tus respuestas | Entrevista **por voz** con calificación y respuesta de ejemplo |
 
 **Dos flujos** (pestañas arriba de la barra de pasos):
 - **📄 Crear mi CV** (agentes 1–3): Tu historia → Tus habilidades → Proyectos y logros → Vacantes → **Tu CV**. Termina con el CV listo.
 - **🎤 Entrenar entrevista** (agente 4): Elige la vacante → Aprendizaje y práctica → Simulación. Se puede practicar para la vacante del CV actual, para un CV guardado en tu cuenta o para cualquier vacante del catálogo (contando brevemente tu historia), **sin necesidad de hacer el CV**.
-  - **Aprendizaje y práctica:** en qué se fijan las empresas (puntualidad, presentación, lenguaje corporal, comunicación, actitud, ejemplos concretos, conocer la empresa, honestidad…), consejos para antes/durante/después, el método SAR con un ejemplo de tu historia, las habilidades que pide la vacante, errores comunes y preguntas para hacer al final. Después, **práctica guiada** de 3 preguntas con retroalimentación en cada respuesta.
-  - **Simulación:** una entrevista de 3 preguntas distintas (presentación, experiencia y situacional), seguidas y sin pistas. Al final: **calificación de 1 a 10**, lo que hiciste bien, **observaciones de mejora** y el detalle de cada respuesta. Cada nueva simulación usa otras preguntas.
+  - **Aprendizaje y práctica:** en qué se fijan las empresas de tecnología (fundamentos, pensar en voz alta, resolución de problemas, código limpio, GitHub, proyectos explicados a fondo, trabajo en equipo, inglés técnico, honestidad…), consejos para antes/durante/después, el método SAR con un ejemplo de tu historia, las habilidades que pide la vacante, errores comunes y preguntas para hacer al final. Después, **práctica guiada** de 3 preguntas con retroalimentación en cada respuesta.
+  - **Simulación:** una entrevista de 3 preguntas distintas (presentación o proyecto, experiencia técnica y situacional técnica, por ejemplo un fallo en producción), seguidas y sin pistas. Al final: **calificación de 1 a 10**, lo que hiciste bien, **observaciones de mejora** y el detalle de cada respuesta. Cada nueva simulación usa otras preguntas.
 
 👤 **Humano en el circuito:** la IA propone y explica; la persona **aprueba, quita o agrega** en cada paso. La IA no inventa habilidades.
 
@@ -69,14 +67,14 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 
 ## Guion de la demo (90 segundos)
 
-1. **Paso 1:** clic en **"✨ Usar ejemplo (Mariana)"** → **"Analizar mi historia"**. Señalar el panel de agentes trabajando.
+1. **Paso 1:** clic en **"✨ Usar ejemplo (Diego)"** (estudiante de último año de Ingeniería en Sistemas) → **"Analizar mi historia"**. Señalar el panel de agentes trabajando.
 2. **Paso 2:** mostrar que cada habilidad tiene **evidencia**. Quitar una para demostrar que *tú decides*. → **"Aprobar y continuar"**.
 3. **Paso 3 (opcional):** **Proyectos y logros**, con una guía de qué escribir y cómo. Agregar uno o dar clic en **"Omitir, no agregar nada"** (el CV queda sin esas secciones).
 4. **Paso 4:** mostrar el **% de compatibilidad**, "por qué encajas" y "para crecer". Elegir la primera vacante.
 5. **Paso 5:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**. Aquí termina el flujo del CV.
 6. **Entrenar entrevista:** clic en **"🎤 Entrenar la entrevista para esta vacante"** (o en la pestaña **🎤 Entrenar entrevista**) → **Empezar a entrenar**. Mostrar **En qué se fijan las empresas**, responder una pregunta de la práctica (**🎤 Responder con mi voz** → **Evaluar**) y luego **Ir a la simulación** → contestar las 3 preguntas → mostrar la **calificación /10** y las **observaciones de mejora**.
 
-> Cierre: *"En menos de 2 minutos, Mariana pasó de 'no tengo experiencia' a tener un CV, 3 vacantes y una entrevista practicada."*
+> Cierre: *"En menos de 2 minutos, Diego pasó de 'tengo proyectos pero no sé cómo venderlos' a tener un CV técnico, 3 vacantes compatibles con su stack y una entrevista practicada."*
 
 ---
 
@@ -91,7 +89,7 @@ Hackaton/
 │   ├── cuentas.js      # Cuentas: en el navegador (localStorage) o en el servidor si está corriendo
 │   ├── cv-latex.js     # CV con la plantilla LaTeX (.tex, Overleaf y versión imprimible)
 │   ├── motor-local.js  # Los 4 agentes simulados (modo demo, sin internet)
-│   └── vacantes.js     # 30 vacantes de ejemplo (empresas ficticias)
+│   └── vacantes.js     # 30 vacantes de tecnología (empresas ficticias inspiradas en tipos de empresas reales)
 ├── servidor.py         # Servidor local + agentes con Claude (opcional) + API de cuentas
 ├── cuentas.py          # Cuentas: usuarios, contraseñas (hash), sesiones y CV guardados (SQLite)
 ├── datos/              # Se crea al usar cuentas: despega.db (NO se sube a git)
@@ -101,6 +99,8 @@ Hackaton/
 ```
 
 **Arquitectura:** cada agente es una llamada a la IA con sus propias instrucciones y un **esquema JSON** de salida. Los agentes se pasan el resultado en cadena: Perfil → Vacantes → CV → Entrevista. El motor local devuelve **exactamente el mismo JSON**, así la interfaz no distingue entre modos.
+
+**Vacantes:** 30 vacantes en `js/vacantes.js` para prácticas profesionales, becario, trainee y junior: backend, frontend, full stack, móvil, datos, machine learning, QA, DevOps/SRE, ciberseguridad, soporte, videojuegos y sistemas embebidos, en CDMX, Guadalajara, Monterrey, Querétaro, Aguascalientes, León, Mérida y remoto. Las **empresas son ficticias**, cada una inspirada en un tipo de empresa real del sector (fintech, e-commerce, consultora nearshore, banca en transformación digital, SaaS, startups de IA, manufactura automotriz, govtech…), indicado en el campo `sector`. Los **sueldos son rangos aproximados** (brutos mensuales) para la demo. No se usan nombres de empresas reales para no atribuirles vacantes ni sueldos inventados.
 
 **Datos:** las vacantes viven en `js/vacantes.js`. Sin cuenta (modo invitado), el perfil solo vive en la memoria del navegador y no se guarda nada.
 

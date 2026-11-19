@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Despega · Tu primer empleo</title>
-  <meta name="description" content="Un equipo de agentes de IA que convierte lo que ya sabes hacer en tu primer empleo.">
+  <title>Despega · Tu primer empleo en tecnología</title>
+  <meta name="description" content="Un equipo de agentes de IA que convierte tus proyectos de ciencias computacionales en tu primer empleo en tecnología.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -19,7 +19,7 @@
       <span class="marca-icono" aria-hidden="true">🚀</span>
       <div>
         <h1 class="marca-nombre">Despega</h1>
-        <p class="marca-lema">Tu equipo de IA para conseguir tu primer empleo</p>
+        <p class="marca-lema">Tu equipo de IA para tu primer empleo en tecnología · estudiantes y recién egresados de computación</p>
       </div>
     </div>
     <div class="encabezado-acciones">
@@ -44,7 +44,7 @@
       <form id="form-acceso" novalidate>
         <label class="campo">
           <span>Nombre completo</span>
-          <input id="acc-nombre" type="text" autocomplete="username" maxlength="80" placeholder="Ej. Mariana López García" required>
+          <input id="acc-nombre" type="text" autocomplete="username" maxlength="80" placeholder="Ej. Diego Hernández López" required>
         </label>
         <label class="campo">
           <span>Contraseña</span>
@@ -122,22 +122,22 @@
       <!-- PASO 1: Historia -->
       <section id="paso-1" class="paso activo" aria-labelledby="t-paso-1">
         <h2 id="t-paso-1">Cuéntanos de ti</h2>
-        <p class="ayuda">No necesitas experiencia formal. Cuéntanos lo que haces en tu día a día: ayudar en un negocio, la escuela, tus redes, voluntariados, hobbies… <strong>Todo cuenta.</strong></p>
+        <p class="ayuda">¿Estudias o acabas de egresar de una carrera de computación? Cuéntanos tu experiencia: proyectos escolares, prácticas, servicio social, hackatones, programación competitiva, código abierto, tesis, cursos y proyectos personales. <strong>Todo cuenta.</strong></p>
 
         <div class="tarjeta">
           <div class="fila-campos">
             <label class="campo">
               <span>Tu nombre</span>
-              <input id="in-nombre" type="text" autocomplete="given-name" placeholder="Ej. Mariana López">
+              <input id="in-nombre" type="text" autocomplete="given-name" placeholder="Ej. Diego Hernández">
             </label>
             <label class="campo campo-chico">
               <span>Edad</span>
-              <input id="in-edad" type="number" min="15" max="35" placeholder="20">
+              <input id="in-edad" type="number" min="15" max="40" placeholder="22">
             </label>
           </div>
           <label class="campo">
             <span>Tu historia</span>
-            <textarea id="in-historia" rows="7" placeholder="Ej. Ayudo en la papelería de mi familia atendiendo clientes y cobrando en caja. También manejo el Instagram del negocio…"></textarea>
+            <textarea id="in-historia" rows="7" placeholder="Ej. Estudio Ingeniería en Sistemas. En mis prácticas desarrollé una API en Python con FastAPI y PostgreSQL. Mi proyecto final fue una app web en React…"></textarea>
           </label>
           <details class="datos-cv">
             <summary>Datos para tu CV (opcional): contacto y estudios</summary>
@@ -148,17 +148,17 @@
             </div>
             <div class="fila-campos">
               <label class="campo"><span>Ciudad</span><input id="in-ciudad" type="text" autocomplete="address-level2" placeholder="Ej. Guadalajara, MX"></label>
-              <label class="campo"><span>LinkedIn o portafolio</span><input id="in-enlace" type="text" autocomplete="url" placeholder="Ej. linkedin.com/in/tu-nombre"></label>
+              <label class="campo"><span>GitHub, LinkedIn o portafolio</span><input id="in-enlace" type="text" autocomplete="url" placeholder="Ej. github.com/tu-usuario"></label>
             </div>
             <div class="fila-campos">
-              <label class="campo"><span>Escuela</span><input id="in-escuela" type="text" placeholder="Ej. CETis 14"></label>
-              <label class="campo"><span>Estudios</span><input id="in-nivel" type="text" placeholder="Ej. Bachillerato técnico en contabilidad"></label>
-              <label class="campo campo-chico"><span>Periodo</span><input id="in-periodo" type="text" placeholder="Ej. 2021 – 2024"></label>
+              <label class="campo"><span>Escuela</span><input id="in-escuela" type="text" placeholder="Ej. Universidad Tecnológica Aurora"></label>
+              <label class="campo"><span>Estudios</span><input id="in-nivel" type="text" placeholder="Ej. Ingeniería en Sistemas Computacionales"></label>
+              <label class="campo campo-chico"><span>Periodo</span><input id="in-periodo" type="text" placeholder="Ej. 2022 – 2026"></label>
             </div>
           </details>
           <div class="acciones">
             <button id="btn-dictar" class="btn btn-secundario" type="button">🎤 Dictar con mi voz</button>
-            <button id="btn-ejemplo" class="btn btn-fantasma" type="button">✨ Usar ejemplo (Mariana)</button>
+            <button id="btn-ejemplo" class="btn btn-fantasma" type="button">✨ Usar ejemplo (Diego)</button>
             <button id="btn-analizar" class="btn btn-primario" type="button">Analizar mi historia →</button>
           </div>
           <p id="estado-dictado" class="estado-voz" hidden></p>
@@ -175,7 +175,7 @@
         <form id="form-agregar" class="tarjeta tarjeta-suave agregar-habilidad">
           <label class="campo">
             <span>Agregar otra habilidad o aptitud</span>
-            <input id="in-nueva-habilidad" type="text" placeholder="Ej. Inglés, Paciencia, Cocina…" list="catalogo-habilidades" autocomplete="off">
+            <input id="in-nueva-habilidad" type="text" placeholder="Ej. Python, Docker, Liderazgo…" list="catalogo-habilidades" autocomplete="off">
           </label>
           <datalist id="catalogo-habilidades"></datalist>
 
@@ -190,7 +190,7 @@
           </fieldset>
 
           <button class="btn btn-secundario" type="submit">+ Agregar</button>
-          <p class="pista-tipo"><strong>Técnica:</strong> algo que sabes hacer (Excel, cocinar, editar videos). <strong>Blanda:</strong> cómo te relacionas y trabajas (puntualidad, paciencia, liderazgo). Las habilidades nuevas se guardan en tus opciones para la próxima vez.</p>
+          <p class="pista-tipo"><strong>Técnica:</strong> lenguajes, herramientas y áreas (Python, SQL, Docker, machine learning). <strong>Blanda:</strong> cómo te relacionas y trabajas (comunicación, trabajo en equipo, liderazgo). Las habilidades nuevas se guardan en tus opciones para la próxima vez.</p>
         </form>
 
         <label class="campo">
@@ -207,21 +207,22 @@
       <!-- PASO 3: Proyectos y logros (opcional) -->
       <section id="paso-3" class="paso" aria-labelledby="t-paso-3">
         <h2 id="t-paso-3">¿Tienes proyectos o logros? <span class="opcional">Opcional</span></h2>
-        <p class="ayuda">Un CV con proyectos y logros demuestra lo que sabes hacer, aunque nunca hayas tenido un empleo formal. Si no tienes nada que agregar ahora, <strong>puedes omitir este paso</strong> y tu CV queda igual.</p>
+        <p class="ayuda">En tecnología, tus proyectos y logros son tu mejor carta de presentación: demuestran lo que sabes construir aunque todavía no tengas un empleo formal. Si no tienes nada que agregar ahora, <strong>puedes omitir este paso</strong> y tu CV queda igual.</p>
 
         <div class="tarjeta tarjeta-suave guia">
           <h3>💡 ¿Qué cuenta como proyecto?</h3>
-          <p>Algo que hiciste de principio a fin, solo o en equipo: un trabajo escolar importante, un emprendimiento o venta por tu cuenta, una página o app, videos para un negocio, un evento que organizaste, un voluntariado, algo que reparaste o construiste.</p>
+          <p>Software que construiste de principio a fin, solo o en equipo: el proyecto final de una materia, tu tesis, algo de tus prácticas o servicio social, una app o sitio web, una API, un bot, un modelo de machine learning, un script que automatiza algo, un juego, una contribución a código abierto o lo que hiciste en un hackatón.</p>
           <h3>🏆 ¿Qué cuenta como logro?</h3>
-          <p>Un reconocimiento o resultado que alguien más pueda comprobar: un lugar en un concurso o torneo, una beca, un diploma o certificado, un promedio destacado, ser jefe de grupo, una meta cumplida con números.</p>
+          <p>Un reconocimiento o resultado que alguien más pueda comprobar: un lugar en un hackatón, el ICPC, una olimpiada de informática o matemáticas; una certificación (por ejemplo de nube o redes); una beca; un pull request aceptado en un proyecto conocido; una publicación; un promedio destacado.</p>
           <h3>✍️ Cómo escribirlo bien</h3>
           <ul class="lista-check">
-            <li>Empieza con un verbo: <em>Creé, Organicé, Vendí, Diseñé, Enseñé</em>.</li>
-            <li>Di qué hiciste y con qué herramientas (Canva, Excel, Python, celular…).</li>
-            <li>Agrega un resultado, de preferencia con número: <em>«vendí 120 piezas en 2 meses»</em>.</li>
-            <li>Solo escribe cosas reales: en la entrevista te pueden preguntar por ellas.</li>
+            <li>Empieza con un verbo de acción: <em>Desarrollé, Diseñé, Implementé, Automaticé, Optimicé, Desplegué</em>.</li>
+            <li>Nombra las tecnologías que usaste (lenguajes, frameworks, bases de datos, nube).</li>
+            <li>Agrega un resultado medible si lo tienes: <em>«reduje el tiempo de respuesta de 2 s a 300 ms»</em>, <em>«lo usan 150 estudiantes»</em>.</li>
+            <li>Si el código es público, pon el enlace al repositorio en tu GitHub.</li>
+            <li>Solo escribe cosas reales: en la entrevista técnica te van a pedir que las expliques.</li>
           </ul>
-          <p class="ejemplo-guia"><strong>Ejemplo de proyecto:</strong> «Venta de postres en la escuela» · Instagram, Excel · 2024 → <em>Organicé la producción y venta de postres; vendí más de 300 piezas en un semestre y llevé las cuentas en Excel.</em></p>
+          <p class="ejemplo-guia"><strong>Ejemplo de proyecto:</strong> «Sistema de préstamos de la biblioteca» · React, Node.js, PostgreSQL · 2025 → <em>Desarrollé en equipo de 4 una app web para registrar préstamos; implementé la API y las pruebas, y la usan 150 estudiantes al mes.</em></p>
         </div>
 
         <div class="tarjeta">
@@ -246,7 +247,7 @@
       <!-- PASO 4: Vacantes -->
       <section id="paso-4" class="paso" aria-labelledby="t-paso-4">
         <h2 id="t-paso-4">Vacantes para ti</h2>
-        <p class="ayuda">El <strong>Buscador</strong> revisó <span id="total-vacantes">30</span> vacantes sin experiencia requerida y eligió las que mejor encajan contigo.</p>
+        <p class="ayuda">El <strong>Buscador</strong> revisó <span id="total-vacantes">30</span> vacantes de tecnología para estudiantes y recién egresados (prácticas, becario, trainee y junior) y eligió las que mejor encajan con tu perfil.</p>
         <div id="lista-vacantes" class="vacantes"></div>
         <div class="acciones acciones-final">
           <button class="btn btn-fantasma" type="button" data-ir="3">← Volver</button>
@@ -318,15 +319,15 @@
           <p class="pista-tipo">El Entrenador usa tus experiencias reales para hacerte preguntas y darte respuestas de ejemplo. Puedes ser breve.</p>
           <label class="campo">
             <span>Tu nombre</span>
-            <input id="ent-nombre" type="text" autocomplete="name" placeholder="Ej. Mariana López">
+            <input id="ent-nombre" type="text" autocomplete="name" placeholder="Ej. Diego Hernández">
           </label>
           <label class="campo">
-            <span>Lo que haces en tu día a día</span>
-            <textarea id="ent-historia" rows="5" placeholder="Ej. Ayudo en la papelería de mi familia atendiendo clientes y cobrando en caja…"></textarea>
+            <span>Tu formación, proyectos y experiencia</span>
+            <textarea id="ent-historia" rows="5" placeholder="Ej. Estudio Ingeniería en Sistemas. En mis prácticas desarrollé una API en Python…"></textarea>
           </label>
           <div class="acciones">
             <button id="btn-ent-dictar" class="btn btn-secundario btn-chico" type="button">🎤 Dictar con mi voz</button>
-            <button id="btn-ent-ejemplo" class="btn btn-fantasma btn-chico" type="button">✨ Usar ejemplo (Mariana)</button>
+            <button id="btn-ent-ejemplo" class="btn btn-fantasma btn-chico" type="button">✨ Usar ejemplo (Diego)</button>
           </div>
           <p id="estado-ent-dictado" class="estado-voz" hidden></p>
         </div>
@@ -402,7 +403,7 @@
         <div id="sim-inicio" class="tarjeta">
           <h3>Antes de empezar</h3>
           <ul class="lista-check">
-            <li>Imagina que estás frente a la persona que entrevista: siéntate derecho y respira.</li>
+            <li>Imagina que estás en la videollamada con la persona reclutadora o líder técnico: respira y tómate tu tiempo.</li>
             <li>Responde cada pregunta como lo harías en voz alta (30 segundos a 1 minuto).</li>
             <li>No verás consejos hasta el final: así sabrás cómo te iría de verdad.</li>
           </ul>
@@ -557,7 +558,7 @@
 
   <div id="aviso" class="aviso" role="status" hidden></div>
 
-  <footer class="pie">Demo de hackatón · Las vacantes y empresas son ficticias.</footer>
+  <footer class="pie">Demo de hackatón · Las empresas son ficticias, inspiradas en tipos de empresas reales del sector tecnológico; sueldos aproximados.</footer>
 
   <script src="js/vacantes.js"></script>
   <script src="js/motor-local.js"></script>
