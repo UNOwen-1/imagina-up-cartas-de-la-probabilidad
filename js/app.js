@@ -10,18 +10,19 @@
   const normalizar = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
   const EJEMPLO = {
-    nombre: "Mariana López",
-    edad: 20,
+    nombre: "Diego Hernández",
+    edad: 22,
     historia:
-      "Ayudo en la papelería de mi familia desde hace tres años: atiendo a los clientes, cobro en caja y hago el corte del día. " +
-      "También manejo el Instagram y el TikTok del negocio; grabo videos de los productos nuevos y ya tenemos más de 2,000 seguidores. " +
-      "Llevo el inventario en Excel y aviso a mi papá cuando hay que surtir. " +
-      "Los fines de semana doy clases de regularización de matemáticas a mis primos. " +
-      "En la prepa organicé la kermés de fin de año junto con mi grupo.",
+      "Estudio el último año de Ingeniería en Sistemas Computacionales. " +
+      "En mis prácticas profesionales en una startup desarrollé una API REST en Python con FastAPI y PostgreSQL, y la desplegamos con Docker en AWS. " +
+      "Mi proyecto final de bases de datos fue una aplicación web en React para administrar la biblioteca de la facultad; trabajamos en equipo con Git y GitHub usando pull requests. " +
+      "En un hackatón de gobierno abierto mi equipo entrenó un modelo de machine learning para clasificar reportes ciudadanos y quedamos en segundo lugar. " +
+      "Practico programación competitiva en Codeforces y doy asesorías de estructuras de datos a compañeros de semestres anteriores. " +
+      "Leo documentación en inglés todos los días.",
     ciudad: "Guadalajara, MX",
-    escuela: "CETis 14",
-    nivel: "Bachillerato técnico en contabilidad",
-    periodo: "2021 – 2024"
+    escuela: "Universidad Tecnológica Aurora",
+    nivel: "Ingeniería en Sistemas Computacionales",
+    periodo: "2022 – 2026"
   };
 
   // Campos opcionales del paso 1 que solo se usan para el CV.
@@ -425,12 +426,12 @@
     datos = datos || {};
     const fila = el("div", { class: "extra extra-proyecto" },
       el("div", { class: "fila-extra" },
-        campoExtra("Nombre del proyecto", "p-nombre", datos.nombre, { placeholder: "Ej. Venta de postres en la escuela" }),
-        campoExtra("Herramientas o tema", "p-herramientas", datos.herramientas, { placeholder: "Ej. Instagram, Excel" }),
+        campoExtra("Nombre del proyecto", "p-nombre", datos.nombre, { placeholder: "Ej. API de reservaciones para la biblioteca" }),
+        campoExtra("Tecnologías", "p-herramientas", datos.herramientas, { placeholder: "Ej. Python, FastAPI, PostgreSQL" }),
         campoExtra("Fecha", "p-fecha", datos.fecha, { placeholder: "Ej. 2024", chico: true, max: 30 })),
       campoExtra("¿Qué hiciste y qué lograste? (una idea por renglón)", "p-descripcion",
         (datos.descripcion || []).join("\n"),
-        { multilinea: true, placeholder: "Ej. Organicé la producción y venta; vendí más de 300 piezas en un semestre." }),
+        { multilinea: true, placeholder: "Ej. Diseñé y desplegué una API REST con 12 endpoints y pruebas automatizadas (85 % de cobertura)." }),
       botonQuitar("Quitar proyecto"));
     $(contenedor || "#lista-proyectos").append(fila);
     if (enfocar) fila.querySelector("input").focus();
@@ -440,7 +441,7 @@
     datos = datos || {};
     const fila = el("div", { class: "extra extra-logro" },
       el("div", { class: "fila-extra" },
-        campoExtra("Logro", "l-titulo", datos.titulo, { placeholder: "Ej. Torneo estatal de matemáticas" }),
+        campoExtra("Logro", "l-titulo", datos.titulo, { placeholder: "Ej. Hackatón nacional de gobierno abierto" }),
         campoExtra("Resultado o detalle", "l-detalle", datos.detalle, { placeholder: "Ej. 2.º lugar" }),
         campoExtra("Año", "l-fecha", datos.fecha, { placeholder: "Ej. 2023", chico: true, max: 30 })),
       botonQuitar("Quitar logro"));
@@ -541,9 +542,9 @@
           ),
           el("div", null,
             el("h3", { text: v.puesto }),
-            el("p", { class: "vacante-empresa", text: v.empresa }),
+            el("p", { class: "vacante-empresa" }, v.empresa, v.sector ? el("span", { class: "vacante-sector", text: " · " + v.sector }) : null),
             el("div", { class: "vacante-datos" },
-              ["📍 " + v.ciudad, "🏢 " + v.modalidad, "⏱ " + v.jornada, "💰 " + v.sueldo].map(function (d) {
+              [v.nivel ? "🎓 " + v.nivel : null, "📍 " + v.ciudad, "🏢 " + v.modalidad, "⏱ " + v.jornada, "💰 " + v.sueldo].filter(Boolean).map(function (d) {
                 return el("span", { class: "vacante-dato", text: d });
               })
             ),
@@ -585,7 +586,7 @@
     const requeridas = v.habilidades.map(normalizar);
     $("#cv-vacante-nombre").textContent = v.puesto + " en " + v.empresa;
 
-    const subtitulo = (p.edad ? p.edad + " años · " : "") + "Busco mi primer empleo";
+    const subtitulo = (p.edad ? p.edad + " años · " : "") + "Busco mi primera oportunidad en tecnología";
     const historiaCorta = p.historia.length > 280 ? p.historia.slice(0, 279) + "…" : p.historia;
 
     $("#cv-antes").replaceChildren(
@@ -717,7 +718,7 @@
     cvsParaEntrevista.forEach(function (cv) {
       opciones.push({ valor: "guardado-" + cv.id, titulo: "💾 CV guardado: " + (cv.puesto || "CV"), detalle: (cv.empresa || "") + " · " + formatoFecha(cv.creado) });
     });
-    opciones.push({ valor: "catalogo", titulo: "🔎 Otra vacante del catálogo", detalle: window.VACANTES.length + " vacantes sin experiencia requerida" });
+    opciones.push({ valor: "catalogo", titulo: "🔎 Otra vacante del catálogo", detalle: window.VACANTES.length + " vacantes de tecnología para estudiantes y recién egresados" });
     const valores = opciones.map(function (o) { return o.valor; });
     const marcada = valores.indexOf(elegida) !== -1 ? elegida : valores[0];
     cont.replaceChildren.apply(cont, opciones.map(function (o) { return opcionVacante(o.valor, o.titulo, o.detalle, o.valor === marcada); }));
@@ -754,7 +755,7 @@
   function llenarCatalogoEntrevista() {
     const sel = $("#ent-catalogo");
     sel.replaceChildren.apply(sel, window.VACANTES.map(function (v) {
-      return el("option", { value: v.id, text: v.puesto + " · " + v.empresa + " (" + v.ciudad + ")" });
+      return el("option", { value: v.id, text: v.puesto + " · " + v.empresa + " (" + (v.nivel ? v.nivel + ", " : "") + v.ciudad + ")" });
     }));
   }
 
@@ -835,53 +836,55 @@
 
   // ---------- Aprendizaje: lo que evalúan las empresas y consejos ----------
   const EN_QUE_SE_FIJAN = [
-    ["⏰", "Puntualidad", "Llega 10 minutos antes (o conéctate 5 minutos antes si es en línea). Es la primera prueba de que eres responsable."],
-    ["👕", "Presentación personal", "Ropa limpia y acorde al lugar; no tiene que ser cara. En videollamada: buena luz, fondo ordenado y cámara a la altura de los ojos."],
-    ["🤝", "Primera impresión y lenguaje corporal", "Saludo amable, contacto visual, postura derecha y sonrisa. Guarda el celular en silencio."],
-    ["🗣️", "Comunicación clara", "Respuestas ordenadas de 30 segundos a 1 minuto, sin muletillas («este…», «o sea») y con un trato respetuoso."],
-    ["🌱", "Actitud y ganas de aprender", "En un primer empleo pesa más que la experiencia: muestra disposición, curiosidad y que aceptas retroalimentación."],
-    ["📌", "Ejemplos concretos", "No basta decir «soy responsable»: demuéstralo con algo que hiciste en la escuela, tu casa, un negocio o un voluntariado."],
-    ["🏢", "Que conozcas la empresa y el puesto", "Saber qué hacen, qué pide la vacante y por qué quieres trabajar ahí demuestra interés real."],
-    ["👥", "Trabajo en equipo y trato con otros", "Buscan a alguien que se lleve bien con compañeros y clientes, y que sepa pedir y dar ayuda."],
-    ["✅", "Honestidad", "No inventes experiencia. Reconocer lo que no sabes y explicar cómo lo aprenderías da confianza."],
-    ["📅", "Disponibilidad y compromiso", "Ten claros tus horarios, cómo llegarías y cuándo podrías empezar."],
-    ["❓", "Tus preguntas al final", "Hacer 1 o 2 preguntas sobre el puesto muestra interés y que te tomas en serio la oportunidad."]
+    ["🧠", "Fundamentos sólidos", "Estructuras de datos, complejidad (Big O), programación orientada a objetos, bases de datos y redes básicas. En perfiles junior pesan más que conocer muchos frameworks."],
+    ["🗣️", "Pensar en voz alta", "En la prueba técnica evalúan cómo razonas: explica qué entiendes, qué opciones ves y por qué eliges una."],
+    ["🧩", "Resolución de problemas", "Aclara requisitos y casos borde, propone primero una solución simple, mejórala y pruébala con ejemplos."],
+    ["💻", "Código limpio", "Nombres claros, funciones pequeñas, manejo de errores y pruebas. Se nota en la prueba técnica y en tu GitHub."],
+    ["📂", "Portafolio y GitHub", "Repositorios con README, instrucciones para correrlos, commits ordenados y, si se puede, una demo desplegada."],
+    ["📌", "Proyectos explicados a fondo", "Qué construiste, qué parte hiciste tú, qué decisiones técnicas tomaste, qué problemas tuviste y qué mejorarías."],
+    ["👥", "Trabajo en equipo", "Uso de Git y pull requests, code review, metodologías ágiles y comunicación con personas no técnicas."],
+    ["🌱", "Aprendizaje continuo", "Cómo aprendes una tecnología nueva: documentación, cursos, proyectos de práctica. Muestra curiosidad real."],
+    ["🌎", "Inglés técnico", "Leer documentación es básico; en empresas nearshore o internacionales parte de la entrevista puede ser en inglés."],
+    ["✅", "Honestidad", "Decir «no lo sé, pero lo investigaría así…» vale más que inventar. No pongas en tu CV tecnologías que no puedas defender."],
+    ["⏰", "Puntualidad y preparación", "Conéctate 5–10 minutos antes y prueba cámara, micrófono, internet, tu editor y compartir pantalla."],
+    ["❓", "Tus preguntas al final", "Preguntar por el stack, el onboarding o la mentoría muestra interés y te ayuda a decidir si el lugar es para ti."]
   ];
 
   const CONSEJOS = {
     "Antes": [
-      "Investiga la empresa: su página, redes sociales y reseñas.",
-      "Relee la vacante y tu CV: todo lo que diga tu CV te lo pueden preguntar.",
-      "Prepara 3 historias reales con el método SAR (abajo te explicamos cómo).",
-      "Ensaya en voz alta, aquí mismo con la práctica y la simulación.",
-      "Ten listos tu CV impreso o en PDF, tu identificación y la ruta o la conexión."
+      "Investiga la empresa y su stack: la vacante, su blog técnico, su GitHub y perfiles de su equipo de ingeniería.",
+      "Repasa fundamentos y resuelve 2–3 problemas diarios tipo entrevista (arreglos, cadenas, hash maps, árboles).",
+      "Prepara 2 proyectos para explicarlos a fondo con el método SAR (abajo te explicamos cómo).",
+      "Deja tu GitHub presentable: README claro, cómo correr el proyecto y capturas o demo.",
+      "Ensaya en voz alta aquí mismo, con la práctica y la simulación."
     ],
     "Durante": [
-      "Saluda por su nombre a quien te entrevista y agradece la oportunidad.",
-      "Escucha la pregunta completa; si necesitas pensar, di «déjame pensarlo un momento».",
-      "Habla de lo que hiciste tú («yo organicé…»), aunque haya sido en equipo.",
-      "Sé sincero si no sabes algo y explica cómo lo aprenderías.",
-      "No hables mal de nadie (escuela, maestros, trabajos anteriores)."
+      "Antes de programar, aclara entradas, salidas, restricciones y casos borde.",
+      "Piensa en voz alta y empieza por una solución que funcione; luego optimiza y menciona la complejidad.",
+      "Prueba tu código con un ejemplo a mano. Si te atoras, explica qué intentas y acepta las pistas.",
+      "En preguntas de proyectos, habla de lo que hiciste tú («yo implementé…»), aunque haya sido en equipo.",
+      "Si no sabes algo, dilo con honestidad y explica cómo lo averiguarías."
     ],
     "Después": [
       "Envía un mensaje o correo de agradecimiento en las siguientes 24 horas.",
-      "Anota qué te preguntaron y qué te gustaría responder mejor.",
-      "Si no te contactan en el plazo que te dieron, pregunta con amabilidad por el resultado.",
-      "Cada entrevista es práctica: aunque no quedes, llegas mejor a la siguiente."
+      "Anota los problemas que te pusieron y resuélvelos después con calma.",
+      "Si fue en inglés, practica las frases o explicaciones que te costaron.",
+      "Cada proceso es práctica: aunque no quedes, llegas mejor al siguiente. Sigue postulándote."
     ]
   };
 
   const ERRORES_COMUNES = [
-    "Llegar tarde o conectarse sin probar antes la cámara y el micrófono.",
-    "No saber nada de la empresa ni del puesto.",
-    "Responder solo «sí» o «no», sin dar ejemplos.",
-    "Preguntar primero por el sueldo o las vacaciones (espera a que lo mencionen o al final).",
-    "Exagerar o inventar experiencia."
+    "Programar en silencio o lanzarte a codificar sin entender bien el problema.",
+    "Poner en el CV tecnologías que no puedes explicar.",
+    "Tener repositorios vacíos, sin README o con todo en un solo commit.",
+    "No saber explicar las decisiones técnicas de tu propio proyecto.",
+    "Preguntar primero por sueldo o home office (espera a que lo mencionen o al final)."
   ];
 
   const PREGUNTAS_PARA_HACER = [
-    "¿Cómo es un día normal en este puesto?",
-    "¿Qué capacitación reciben las personas que entran?",
+    "¿Qué stack usa el equipo y por qué lo eligieron?",
+    "¿Cómo es el proceso de code review y de despliegue?",
+    "¿Qué acompañamiento o mentoría reciben las personas junior al entrar?",
     "¿Qué esperan que logre en los primeros 3 meses?",
     "¿Cuáles son los siguientes pasos del proceso?"
   ];
@@ -913,19 +916,20 @@
       })));
 
     const sar = bloque("🧩 Cómo responder: el método SAR", false, [
-      el("p", { text: "Las preguntas de experiencia («cuéntame de una vez que…») se responden mejor en tres partes:" }),
+      el("p", { text: "Las preguntas sobre proyectos y experiencia («cuéntame de una vez que…») se responden mejor en tres partes:" }),
       el("ol", { class: "sar" },
-        el("li", null, el("strong", { text: "Situación: " }), "dónde estabas y qué pasaba."),
-        el("li", null, el("strong", { text: "Acción: " }), "qué hiciste tú, paso a paso."),
-        el("li", null, el("strong", { text: "Resultado: " }), "qué lograste o aprendiste, de preferencia con un número.")),
+        el("li", null, el("strong", { text: "Situación: " }), "el proyecto o problema y qué había que resolver."),
+        el("li", null, el("strong", { text: "Acción: " }), "qué hiciste tú, qué tecnologías usaste y por qué."),
+        el("li", null, el("strong", { text: "Resultado: " }), "qué lograste o aprendiste, de preferencia con un dato («bajé el tiempo de carga de 4 a 1 segundo»).")),
       clave ? el("p", { class: "ejemplo-guia" },
         el("strong", { text: "Empieza con algo tuyo: " }),
-        "«" + clave.evidencia + "». Cuéntalo como Situación, di qué Acción tomaste y cierra con el Resultado; así demuestras tu habilidad de " +
-        clave.nombre.toLowerCase() + ".") : null
+        "«" + clave.evidencia + "». Cuéntalo como Situación, di qué Acción técnica tomaste y cierra con el Resultado; así demuestras " +
+        clave.nombre + ".") : null
     ]);
 
     const vacanteBloque = bloque("🎯 Para esta vacante: " + vacante.puesto + " en " + vacante.empresa, false, [
       vacante.descripcion ? el("p", { text: vacante.descripcion }) : null,
+      vacante.sector || vacante.nivel ? el("p", { class: "pista-tipo", text: [vacante.nivel, vacante.sector].filter(Boolean).join(" · ") }) : null,
       pedidas.length ? el("p", { class: "pista-tipo", text: "Habilidades que pide la vacante (✓ = ya la tienes en tu perfil; prepara un ejemplo de cada una):" }) : null,
       pedidas.length ? el("div", { class: "chips" }, pedidas.map(function (h) {
         const si = !!tiene[normalizar(h)];
