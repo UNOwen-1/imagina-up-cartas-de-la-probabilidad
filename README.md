@@ -16,10 +16,10 @@ Proyecto de hackatón · MVP funcional en una página web local.
 
 | # | Agente | Qué hace | Momento "wow" |
 |---|---|---|---|
-| 1 | 🧭 **Perfilador** | Lee tu historia (texto o voz) y la convierte en habilidades técnicas y blandas | Cada habilidad muestra **la frase de tu historia de donde salió** |
+| 1 | 🧭 **Perfilador** | Lee tu historia y la convierte en habilidades técnicas y blandas | Cada habilidad muestra **la frase de tu historia de donde salió** |
 | 2 | 🔎 **Buscador** | Compara tu perfil con 30 vacantes de tecnología y elige las 3 mejores | **% de compatibilidad**, por qué encajas y qué te falta |
 | 3 | ✍️ **Adaptador** | Reescribe tu CV para la vacante elegida | Comparación **antes / después** y CV en PDF |
-| 4 | 🎤 **Entrenador** | Te prepara para la entrevista técnica y evalúa tus respuestas | Entrevista **por voz** con calificación y respuesta de ejemplo |
+| 4 | 🎤 **Entrenador** | Te prepara para la entrevista técnica y evalúa tus respuestas | Práctica y simulación escritas, con calificación y respuesta de ejemplo |
 
 **Dos flujos** (pestañas arriba de la barra de pasos):
 - **📄 Crear mi CV** (agentes 1–3): Tu historia → Tus habilidades → Proyectos y logros → Vacantes → **Tu CV**. Termina con el CV listo.
@@ -56,7 +56,7 @@ Doble clic en **`iniciar.bat`**, o en una terminal:
 python servidor.py
 ```
 
-Se abre `http://localhost:8000`. La voz funciona mejor así que abriendo el archivo directamente.
+Se abre `http://localhost:8000`.
 
 ### Opción C · Con IA real (Claude)
 ```powershell
@@ -85,7 +85,7 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 3. **Paso 3 (opcional):** **Proyectos y logros**, con una guía de qué escribir y cómo. Agregar uno o dar clic en **"Omitir, no agregar nada"** (el CV queda sin esas secciones).
 4. **Paso 4:** mostrar el **% de compatibilidad**, "por qué encajas" y "para crecer". Elegir la primera vacante.
 5. **Paso 5:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**. Aquí termina el flujo del CV.
-6. **Entrenar entrevista:** clic en **"🎤 Entrenar la entrevista para esta vacante"** (o en la pestaña **🎤 Entrenar entrevista**) → mostrar **En qué se fijan las empresas** (aparece al instante), responder una pregunta de la práctica guiada (**🎤 Responder con mi voz** → **Evaluar**) y luego la pestaña **🎯 Simulación** → **Comenzar simulación** → contestar las 3 preguntas → mostrar la **calificación /10** y las **observaciones de mejora**.
+6. **Entrenar entrevista:** clic en **"🎤 Entrenar la entrevista para esta vacante"** (o en la pestaña **🎤 Entrenar entrevista**) → mostrar **En qué se fijan las empresas** (aparece al instante), responder por escrito una pregunta de la práctica guiada (**Evaluar mi respuesta**) y luego la pestaña **🎯 Simulación** → **Comenzar simulación** → contestar las 3 preguntas → mostrar la **calificación /10** y las **observaciones de mejora**.
 
 > Cierre: *"En menos de 2 minutos, Diego pasó de 'tengo proyectos pero no sé cómo venderlos' a tener un CV técnico, 3 vacantes compatibles con su stack y una entrevista practicada."*
 
@@ -98,7 +98,7 @@ Hackaton/
 ├── index.html          # La página (flujo de CV en 5 pasos + flujo de entrevista + panel de agentes)
 ├── css/estilos.css     # Estilos: paleta y tipografías para aprendizaje
 ├── js/
-│   ├── app.js          # Lógica de la interfaz, voz, cuentas y conexión con los agentes
+│   ├── app.js          # Lógica de la interfaz, cuentas y conexión con los agentes
 │   ├── cuentas.js      # Cuentas: en el navegador (localStorage) o en el servidor si está corriendo
 │   ├── cv-latex.js     # CV con la plantilla LaTeX (.tex, Overleaf y versión imprimible)
 │   ├── problemas.js    # 10 problemas tipo LeetCode con pistas, solución explicada y código
@@ -160,8 +160,7 @@ También incluye: **contraste WCAG AA**, tamaño base de 17 px, interlineado 1.6
 
 ## Requisitos y notas
 
-- **Navegador:** Chrome o Edge (recomendado para voz). Firefox funciona, pero sin dictado por voz.
-- **Voz:** el dictado usa la Web Speech API del navegador. En Chrome necesita internet y permiso de micrófono.
+- **Navegador:** cualquier navegador moderno (Chrome, Edge, Firefox o Safari).
 - **CV en LaTeX:** el CV adaptado usa una plantilla LaTeX de una página (secciones Perfil, Educación, Experiencia, Proyectos, Logros y Habilidades técnicas/blandas; Proyectos y Logros solo aparecen si se llenaron en el paso 3). En el paso 5 hay tres opciones:
   - **Descargar CV (PDF):** abre la ventana de impresión con el mismo diseño de la plantilla; elijan **Guardar como PDF**.
   - **Descargar LaTeX (.tex):** el archivo fuente para editarlo y compilarlo con `pdflatex`.
