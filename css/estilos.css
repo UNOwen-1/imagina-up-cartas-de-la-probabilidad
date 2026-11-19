@@ -362,6 +362,7 @@ input:focus, textarea:focus { border-color: var(--primario); outline: none; box-
 .retro-puntaje { display: flex; align-items: center; gap: .6rem; margin-bottom: .6rem; }
 #ent-estrellas { font-size: 1.4rem; letter-spacing: .1rem; color: var(--acento); }
 .retro-bueno { background: var(--exito-suave); padding: .6rem .8rem; border-radius: 10px; margin: 0 0 .5rem; }
+.retro-oportunidad { background: var(--primario-suave); padding: .6rem .8rem; border-radius: 10px; margin: 0 0 .6rem; }
 .retro-mejorar { background: var(--acento-suave); color: var(--acento-texto); padding: .6rem .8rem; border-radius: 10px; margin: 0 0 .6rem; }
 details { margin-bottom: .8rem; }
 summary { cursor: pointer; font-weight: 700; color: var(--primario-texto); }

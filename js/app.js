@@ -1078,7 +1078,7 @@
         retro.replaceChildren(
           el("div", { class: "retro-puntaje" }, el("span", { "aria-hidden": "true", text: estrellas(puntaje) }), el("strong", { text: puntaje + " de 5" })),
           el("p", { class: "retro-bueno", text: r.lo_bueno }),
-          el("p", { class: "retro-mejorar", text: r.mejorar }));
+          el("p", { class: "retro-oportunidad", text: r.mejorar }));
         retro.hidden = false;
         registrar("entrenador", "problema «" + prob.titulo + "»: " + puntaje + "/5.");
       }));
