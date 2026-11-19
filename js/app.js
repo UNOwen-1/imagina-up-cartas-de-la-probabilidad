@@ -625,7 +625,7 @@
       })),
       el("h4", { text: "Experiencia" }),
       el("ul", null, cv.logros.map(function (l) { return el("li", { text: l }); })),
-      el("div", null, seccionesExtra(p))
+      el("div", null, seccionesExtra({ proyectos: datosDelCV().proyectos, reconocimientos: datosDelCV().logros }))
     );
 
     $("#lista-cambios").replaceChildren.apply($("#lista-cambios"), (cv.cambios || []).map(function (c) { return el("li", { text: c }); }));

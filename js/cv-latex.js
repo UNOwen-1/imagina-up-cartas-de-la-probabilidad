@@ -7,6 +7,12 @@
   const normalizar = (t) => String(t || "").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 
   // ---------- Contenido del CV ----------
+  // Versión con el estilo corregido por el Adaptador, si corresponde 1 a 1 con lo que escribió la persona.
+  function pulidos(corregidos, originales) {
+    originales = originales || [];
+    return Array.isArray(corregidos) && corregidos.length === originales.length ? corregidos : originales;
+  }
+
   function datosCV(perfil, vacante, cv, contacto) {
     contacto = contacto || {};
     const estudios = perfil.estudios || {};
@@ -59,8 +65,8 @@
         logros: cv.logros
       },
       // Del paso 3 (opcional): si se omitió, quedan vacías y sus secciones no aparecen.
-      proyectos: perfil.proyectos || [],
-      logros: perfil.reconocimientos || [],
+      proyectos: pulidos(cv.proyectos, perfil.proyectos),
+      logros: pulidos(cv.reconocimientos, perfil.reconocimientos),
       tecnicas: tecnicas,
       blandas: blandas,
       disponibilidad: vacante.jornada + ", " + vacante.modalidad.toLowerCase() + ". Inicio inmediato."
