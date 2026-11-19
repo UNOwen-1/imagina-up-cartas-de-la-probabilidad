@@ -215,7 +215,6 @@
     $("#flujo-cv").setAttribute("aria-selected", String(cv));
     $("#flujo-entrevista").setAttribute("aria-selected", String(!cv));
     $("#lista-pasos").hidden = !cv;
-    $("#lista-pasos-ent").hidden = cv;
   }
 
   // Flujo del CV (pasos 1–5).
@@ -226,15 +225,25 @@
     mostrarSeccion("paso", "#lista-pasos", n);
   }
 
-  // Flujo de entrenamiento de entrevista (1: preparar, 2: entrevista).
-  function irEnt(n) {
-    if (n === 2 && !estado.preguntas.length) return;
-    if (n === 3 && !estado.entrevista.vacante) return;
-    if (n === 3) mostrarEstadoSimulacion();
-    estado.pasoEnt = n;
+  // Flujo de entrenamiento: una sola pantalla. Se elige la vacante y hay dos pestañas:
+  // "aprendizaje" (consulta libre + práctica opcional) y "simulacion" (la única parte secuencial).
+  function irEnt(tab) {
     marcarFlujo("entrevista");
-    if (n === 1) prepararOpcionesEntrevista();
-    mostrarSeccion("ent", "#lista-pasos-ent", n);
+    mostrarSeccion("ent", "#lista-pasos-ent", 1);
+    mostrarTabEnt(tab || estado.tabEnt || "aprendizaje");
+  }
+
+  function mostrarTabEnt(tab) {
+    estado.tabEnt = tab;
+    const apr = tab === "aprendizaje";
+    $("#tab-aprendizaje").classList.toggle("activa", apr);
+    $("#tab-simulacion").classList.toggle("activa", !apr);
+    $("#tab-aprendizaje").setAttribute("aria-selected", String(apr));
+    $("#tab-simulacion").setAttribute("aria-selected", String(!apr));
+    $("#panel-aprendizaje").hidden = !apr;
+    $("#panel-simulacion").hidden = apr;
+    if (!apr) mostrarEstadoSimulacion();
+    ubicarSobreTi();
   }
 
   // ---------- Paso 1 → Perfilador ----------
@@ -744,7 +753,7 @@
   function actualizarFuenteEntrevista() {
     const catalogo = fuenteEntrevista() === "catalogo";
     $("#campo-ent-catalogo").hidden = !catalogo;
-    $("#ent-sobre-ti").hidden = !catalogo;
+    actualizarVacanteEntrevista();
     if (catalogo) {
       // Precarga lo que ya se sabe de la persona (CV en curso o cuenta).
       if (!$("#ent-nombre").value) $("#ent-nombre").value = (estado.perfil && estado.perfil.nombre !== "Tu nombre" && estado.perfil.nombre) || (estado.cuenta && estado.cuenta.nombre) || "";
@@ -783,42 +792,100 @@
     };
   }
 
-  async function empezarEntrevista() {
+  // Clave de la vacante elegida: cambia cuando la persona elige otra vacante (o hay un CV nuevo).
+  let claveVacanteEnt = null;
+  function claveSeleccionEntrevista() {
     const fuente = fuenteEntrevista();
-    let vacante, perfil;
+    if (fuente === "catalogo") return "catalogo-" + $("#ent-catalogo").value;
+    if (fuente === "actual") return "actual-" + (estado.vacante ? estado.vacante.id : "") + "-" + (estado.perfil ? estado.perfil.historia.length : 0);
+    return fuente;
+  }
 
+  async function actualizarVacanteEntrevista() {
+    const clave = claveSeleccionEntrevista();
+    if (clave === claveVacanteEnt) return;
+    const fuente = fuenteEntrevista();
+    let vacante = null, perfil = null;
     if (fuente === "actual") {
-      vacante = estado.vacante;
-      perfil = estado.perfil;
+      vacante = estado.vacante; perfil = estado.perfil;
     } else if (fuente.indexOf("guardado-") === 0) {
       const cv = cvsParaEntrevista.find(function (c) { return "guardado-" + c.id === fuente; });
-      const guardado = await window.Cuentas.obtenerCv(cv.id);
-      if (!guardado.datos) { avisar("No se pudieron leer los datos de ese CV."); return; }
-      const r = perfilDesdeCvGuardado(guardado.datos, cv.puesto, cv.empresa);
-      vacante = r.vacante; perfil = r.perfil;
+      try {
+        const guardado = await window.Cuentas.obtenerCv(cv.id);
+        if (guardado.datos) { const r = perfilDesdeCvGuardado(guardado.datos, cv.puesto, cv.empresa); vacante = r.vacante; perfil = r.perfil; }
+      } catch (e) { /* se usa solo la vacante */ }
+      if (!vacante) vacante = perfilDesdeCvGuardado({}, cv.puesto, cv.empresa).vacante;
+      if (claveSeleccionEntrevista() !== clave) return;  // la persona cambió de opción mientras cargaba
     } else {
       vacante = window.VACANTES.find(function (v) { return v.id === $("#ent-catalogo").value; });
-      const historia = $("#ent-historia").value.trim();
-      const nombre = $("#ent-nombre").value.trim();
-      if (estado.perfil && historia === estado.perfil.historia) {
-        perfil = estado.perfil;  // misma historia que el CV en curso: se reutilizan sus habilidades
-      } else {
-        if (historia.split(/\s+/).filter(Boolean).length < 8) {
-          avisar("Cuéntanos un poco más de ti (al menos un par de frases) para preparar tus preguntas.");
-          $("#ent-historia").focus();
-          return;
-        }
-        registrar("perfilador", "leyendo tu historia para la entrevista…");
-        const r = await llamarAgente("perfilador", "perfilador", { nombre: nombre, edad: "", historia: historia }, function (x) {
-          return x && Array.isArray(x.habilidades) && x.habilidades.length > 0;
-        });
-        perfil = { nombre: nombre || r.nombre || "Tu nombre", historia: historia, resumen_profesional: r.resumen_profesional, habilidades: r.habilidades };
-        registrar("perfilador", "encontré " + r.habilidades.length + " habilidades para usar en tus respuestas.");
-      }
     }
-
+    claveVacanteEnt = clave;
     estado.entrevista = { vacante: vacante, perfil: perfil };
-    registrar("entrenador", "preparando preguntas para " + vacante.empresa + "…");
+    estado.simulacion = { preguntas: [], i: 0, respuestas: [], resultado: null };
+    reiniciarPractica();
+    mostrarEstadoSimulacion();
+    const nombre = vacante.puesto + " en " + vacante.empresa;
+    $("#ent-vacante-nombre").textContent = nombre;
+    $("#sim-vacante-nombre").textContent = nombre;
+    renderAprendizaje(vacante, perfil);
+    ubicarSobreTi();
+  }
+
+  function reiniciarPractica() {
+    estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = [];
+    $("#ent-practica-inicio").hidden = false;
+    $("#entrevista").hidden = true;
+    $("#ent-final").hidden = true;
+  }
+
+  // "Cuéntanos de ti" solo aparece si hace falta (vacante del catálogo sin perfil) y dentro del
+  // inicio de la práctica o de la simulación, según la pestaña activa.
+  function ubicarSobreTi() {
+    const caja = $("#ent-sobre-ti");
+    const enSim = estado.tabEnt === "simulacion";
+    const inicio = enSim ? $("#sim-inicio") : $("#ent-practica-inicio");
+    const destino = inicio.querySelector("[data-sobre-ti]");
+    const necesita = fuenteEntrevista() === "catalogo" && !estado.entrevista.perfil && !inicio.hidden;
+    $$("[data-sobre-ti]").forEach(function (c) { c.hidden = true; });
+    if (necesita) {
+      destino.append(caja);
+      destino.hidden = false;
+      caja.hidden = false;
+    } else {
+      caja.hidden = true;
+    }
+  }
+
+  // Devuelve el perfil para practicar o simular; si falta, lo arma con la historia (Perfilador).
+  async function asegurarPerfilEntrevista() {
+    const e = estado.entrevista;
+    if (e.perfil) return e.perfil;
+    const historia = $("#ent-historia").value.trim();
+    const nombre = $("#ent-nombre").value.trim();
+    if (estado.perfil && historia === estado.perfil.historia) {
+      e.perfil = estado.perfil;  // misma historia que el CV en curso: se reutilizan sus habilidades
+    } else {
+      if (historia.split(/\s+/).filter(Boolean).length < 8) {
+        avisar("Para practicar o simular, cuéntanos un poco de ti (al menos un par de frases).");
+        $("#ent-historia").focus();
+        return null;
+      }
+      registrar("perfilador", "leyendo tu historia para la entrevista…");
+      const r = await llamarAgente("perfilador", "perfilador", { nombre: nombre, edad: "", historia: historia }, function (x) {
+        return x && Array.isArray(x.habilidades) && x.habilidades.length > 0;
+      });
+      e.perfil = { nombre: nombre || r.nombre || "Tu nombre", historia: historia, resumen_profesional: r.resumen_profesional, habilidades: r.habilidades };
+      registrar("perfilador", "encontré " + r.habilidades.length + " habilidades para usar en tus respuestas.");
+    }
+    renderAprendizaje(e.vacante, e.perfil);  // ahora el aprendizaje marca lo que ya tienes
+    return e.perfil;
+  }
+
+  async function comenzarPractica() {
+    const perfil = await asegurarPerfilEntrevista();
+    if (!perfil) return;
+    const vacante = estado.entrevista.vacante;
+    registrar("entrenador", "preparando preguntas de práctica para " + vacante.empresa + "…");
     const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: perfil, vacante: vacante }, function (x) {
       return x && Array.isArray(x.preguntas) && x.preguntas.length > 0;
     });
@@ -826,12 +893,10 @@
     estado.iPregunta = 0;
     estado.puntajes = [];
     registrar("entrenador", estado.preguntas.length + " preguntas de práctica listas. ¡Tú puedes!");
-    $("#ent-vacante-nombre").textContent = vacante.puesto + " en " + vacante.empresa;
-    $("#sim-vacante-nombre").textContent = vacante.puesto + " en " + vacante.empresa;
-    estado.simulacion = { preguntas: [], i: 0, respuestas: [], resultado: null };
-    renderAprendizaje(vacante, perfil);
+    $("#ent-practica-inicio").hidden = true;
+    ubicarSobreTi();
     renderPregunta();
-    irEnt(2);
+    $("#entrevista").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   // ---------- Aprendizaje: lo que evalúan las empresas y consejos ----------
@@ -890,6 +955,8 @@
   ];
 
   function renderAprendizaje(vacante, perfil) {
+    const conPerfil = !!perfil;
+    perfil = perfil || { habilidades: [] };
     const tiene = {};
     (perfil.habilidades || []).forEach(function (h) { tiene[normalizar(h.nombre)] = h; });
     const pedidas = vacante.habilidades || [];
@@ -930,8 +997,11 @@
     const vacanteBloque = bloque("🎯 Para esta vacante: " + vacante.puesto + " en " + vacante.empresa, false, [
       vacante.descripcion ? el("p", { text: vacante.descripcion }) : null,
       vacante.sector || vacante.nivel ? el("p", { class: "pista-tipo", text: [vacante.nivel, vacante.sector].filter(Boolean).join(" · ") }) : null,
-      pedidas.length ? el("p", { class: "pista-tipo", text: "Habilidades que pide la vacante (✓ = ya la tienes en tu perfil; prepara un ejemplo de cada una):" }) : null,
+      pedidas.length ? el("p", { class: "pista-tipo", text: conPerfil
+        ? "Habilidades que pide la vacante (✓ = ya la tienes en tu perfil; prepara un ejemplo de cada una):"
+        : "Habilidades que pide la vacante (prepara un proyecto o ejemplo de cada una):" }) : null,
       pedidas.length ? el("div", { class: "chips" }, pedidas.map(function (h) {
+        if (!conPerfil) return el("span", { class: "chip", text: h });
         const si = !!tiene[normalizar(h)];
         return el("span", { class: "chip" + (si ? " chip-destacado" : " chip-falta"), text: (si ? "✓ " : "○ ") + h });
       })) : null,
@@ -954,15 +1024,18 @@
   }
 
   async function comenzarSimulacion() {
+    const perfil = await asegurarPerfilEntrevista();
+    if (!perfil) return;
     const e = estado.entrevista;
     registrar("entrenador", "preparando tu simulación para " + e.vacante.empresa + "…");
-    const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: e.perfil, vacante: e.vacante, modo: "simulacion" }, function (x) {
+    const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: perfil, vacante: e.vacante, modo: "simulacion" }, function (x) {
       return x && Array.isArray(x.preguntas) && x.preguntas.length > 0;
     });
     estado.simulacion = { preguntas: r.preguntas.slice(0, 3), i: 0, respuestas: [], resultado: null };
     registrar("entrenador", "simulación lista: " + estado.simulacion.preguntas.length + " preguntas, sin pistas.");
     renderSimPregunta();
     mostrarEstadoSimulacion();
+    ubicarSobreTi();
     $("#sim-pregunta").scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
@@ -1035,10 +1108,8 @@
   }
 
   function abrirEntrenamiento(preferida) {
-    marcarFlujo("entrevista");
-    if (estado.preguntas.length && !preferida && estado.pasoEnt >= 2) { irEnt(estado.pasoEnt); return; }
-    irEnt(1);
-    if (preferida) prepararOpcionesEntrevista(preferida);
+    irEnt(preferida ? "aprendizaje" : null);
+    prepararOpcionesEntrevista(preferida);
   }
 
   function renderPregunta() {
@@ -1585,7 +1656,9 @@
   function reiniciar() {
     estado.perfil = null; estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
     estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = []; estado.contacto = {};
-    estado.entrevista = { vacante: null, perfil: null }; estado.pasoEnt = 1; cvsParaEntrevista = [];
+    estado.entrevista = { vacante: null, perfil: null }; estado.tabEnt = "aprendizaje"; cvsParaEntrevista = [];
+    claveVacanteEnt = null;
+    reiniciarPractica();
     estado.simulacion = { preguntas: [], i: 0, respuestas: [], resultado: null };
     $("#sim-respuesta").value = "";
     ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta", "#ent-nombre", "#ent-historia"].concat(CAMPOS_CV).forEach(function (s) { $(s).value = ""; });
@@ -1639,11 +1712,17 @@
     $("#flujo-entrevista").addEventListener("click", function () { abrirEntrenamiento(); });
     $("#btn-ir-entrenar").addEventListener("click", function () { abrirEntrenamiento("actual"); });
     $("#btn-otro-cv").addEventListener("click", function () { reiniciar(); });
-    const bEmpezar = $("#btn-empezar-entrevista");
-    bEmpezar.addEventListener("click", conCarga(bEmpezar, "Preparando entrevista…", empezarEntrevista));
-    $("#btn-ent-volver").addEventListener("click", function () { irEnt(1); });
-    $$(".ir-simulacion").forEach(function (b) { b.addEventListener("click", function () { irEnt(3); }); });
-    $$(".ir-aprendizaje").forEach(function (b) { b.addEventListener("click", function () { irEnt(2); }); });
+    $("#ent-catalogo").addEventListener("change", actualizarVacanteEntrevista);
+    $("#tab-aprendizaje").addEventListener("click", function () { mostrarTabEnt("aprendizaje"); });
+    $("#tab-simulacion").addEventListener("click", function () { mostrarTabEnt("simulacion"); });
+    $$(".ir-simulacion").forEach(function (b) { b.addEventListener("click", function () { mostrarTabEnt("simulacion"); window.scrollTo({ top: 0, behavior: "smooth" }); }); });
+    $$(".ir-aprendizaje").forEach(function (b) { b.addEventListener("click", function () { mostrarTabEnt("aprendizaje"); window.scrollTo({ top: 0, behavior: "smooth" }); }); });
+    const bPractica = $("#btn-practica-comenzar");
+    bPractica.addEventListener("click", conCarga(bPractica, "Preparando práctica…", comenzarPractica));
+    // Si cambia la historia (vacante del catálogo), el perfil se vuelve a armar en la siguiente práctica o simulación.
+    $("#ent-historia").addEventListener("input", function () {
+      if (fuenteEntrevista() === "catalogo" && !estado.preguntas.length && !estado.simulacion.preguntas.length) estado.entrevista.perfil = null;
+    });
     const bSimComenzar = $("#btn-sim-comenzar");
     bSimComenzar.addEventListener("click", conCarga(bSimComenzar, "Preparando simulación…", comenzarSimulacion));
     const bSimRepetir = $("#btn-sim-repetir");
@@ -1657,7 +1736,6 @@
       finally { bSimResponder.disabled = false; bSimResponder.textContent = textoBotonSimulacion(); }
     });
     $("#btn-sim-escuchar").addEventListener("click", function () { leerEnVoz($("#sim-pregunta").textContent); });
-    $("#btn-otra-vacante").addEventListener("click", function () { irEnt(1); });
     $("#btn-ent-ejemplo").addEventListener("click", function () {
       $("#ent-nombre").value = EJEMPLO.nombre;
       $("#ent-historia").value = EJEMPLO.historia;
