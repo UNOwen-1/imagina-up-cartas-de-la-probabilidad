@@ -168,8 +168,10 @@ AGENTES = {
         "sistema": (
             "Eres el Agente Entrenador de entrevistas de Despega. Genera exactamente 3 preguntas de entrevista realistas "
             "para la vacante, adaptadas al perfil de la persona (una de motivación, una de experiencia usando una de sus "
-            "habilidades reales y una situacional sobre su primer empleo). Para cada una, 'que_busca' explica en una frase "
-            "qué quiere descubrir el reclutador. " + REGLAS_COMUNES
+            "habilidades reales y una situacional sobre su primer empleo). Si 'modo' es 'simulacion', genera en cambio "
+            "una entrevista completa distinta a la de práctica: una de presentación (háblame de ti o por qué esta empresa), "
+            "una de experiencia o fortalezas con ejemplo y una situacional del puesto. Para cada una, 'que_busca' explica "
+            "en una frase qué quiere descubrir el reclutador. " + REGLAS_COMUNES
         ),
         "esquema": {
             "type": "object",
@@ -185,6 +187,38 @@ AGENTES = {
                 }
             },
             "required": ["preguntas"],
+            "additionalProperties": False,
+        },
+    },
+    "entrenador_simulacion": {
+        "sistema": (
+            "Eres el Agente Entrenador de entrevistas de Despega. Recibes una simulación de entrevista completa: la vacante, "
+            "el perfil de una persona joven sin experiencia formal y sus respuestas a 3 preguntas. Evalúa la entrevista como "
+            "lo haría un reclutador para un primer empleo (actitud, claridad, ejemplos concretos, resultados, conocimiento "
+            "de la empresa, disposición a aprender). Da 'calificacion' (entero de 1 a 10, honesto pero alentador), "
+            "'veredicto' (1 frase), 'fortalezas' (2 a 4 frases concretas sobre lo que hizo bien, citando sus respuestas), "
+            "'mejoras' (2 a 4 observaciones de mejora accionables, por ejemplo el método situación–acción–resultado) y "
+            "'por_pregunta' (una entrada por respuesta, en el mismo orden, con 'puntaje' entero de 1 a 5 y 'comentario' "
+            "de 1–2 frases). " + REGLAS_COMUNES
+        ),
+        "esquema": {
+            "type": "object",
+            "properties": {
+                "calificacion": {"type": "integer"},
+                "veredicto": {"type": "string"},
+                "fortalezas": {"type": "array", "items": {"type": "string"}},
+                "mejoras": {"type": "array", "items": {"type": "string"}},
+                "por_pregunta": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {"puntaje": {"type": "integer"}, "comentario": {"type": "string"}},
+                        "required": ["puntaje", "comentario"],
+                        "additionalProperties": False,
+                    },
+                },
+            },
+            "required": ["calificacion", "veredicto", "fortalezas", "mejoras", "por_pregunta"],
             "additionalProperties": False,
         },
     },

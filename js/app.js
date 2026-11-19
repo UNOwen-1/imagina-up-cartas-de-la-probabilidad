@@ -46,6 +46,7 @@
     cuentasDisponibles: false,
     flujo: "cv",           // "cv" (pasos 1–5) o "entrevista" (entrenamiento aparte)
     entrevista: { vacante: null, perfil: null },  // vacante y perfil con los que se practica
+    simulacion: { preguntas: [], i: 0, respuestas: [], resultado: null },
     preguntas: [],
     iPregunta: 0,
     puntajes: []
@@ -227,6 +228,8 @@
   // Flujo de entrenamiento de entrevista (1: preparar, 2: entrevista).
   function irEnt(n) {
     if (n === 2 && !estado.preguntas.length) return;
+    if (n === 3 && !estado.entrevista.vacante) return;
+    if (n === 3) mostrarEstadoSimulacion();
     estado.pasoEnt = n;
     marcarFlujo("entrevista");
     if (n === 1) prepararOpcionesEntrevista();
@@ -821,15 +824,214 @@
     estado.preguntas = r.preguntas.slice(0, 3);
     estado.iPregunta = 0;
     estado.puntajes = [];
-    registrar("entrenador", estado.preguntas.length + " preguntas listas. ¡Tú puedes!");
+    registrar("entrenador", estado.preguntas.length + " preguntas de práctica listas. ¡Tú puedes!");
     $("#ent-vacante-nombre").textContent = vacante.puesto + " en " + vacante.empresa;
+    $("#sim-vacante-nombre").textContent = vacante.puesto + " en " + vacante.empresa;
+    estado.simulacion = { preguntas: [], i: 0, respuestas: [], resultado: null };
+    renderAprendizaje(vacante, perfil);
     renderPregunta();
     irEnt(2);
   }
 
+  // ---------- Aprendizaje: lo que evalúan las empresas y consejos ----------
+  const EN_QUE_SE_FIJAN = [
+    ["⏰", "Puntualidad", "Llega 10 minutos antes (o conéctate 5 minutos antes si es en línea). Es la primera prueba de que eres responsable."],
+    ["👕", "Presentación personal", "Ropa limpia y acorde al lugar; no tiene que ser cara. En videollamada: buena luz, fondo ordenado y cámara a la altura de los ojos."],
+    ["🤝", "Primera impresión y lenguaje corporal", "Saludo amable, contacto visual, postura derecha y sonrisa. Guarda el celular en silencio."],
+    ["🗣️", "Comunicación clara", "Respuestas ordenadas de 30 segundos a 1 minuto, sin muletillas («este…», «o sea») y con un trato respetuoso."],
+    ["🌱", "Actitud y ganas de aprender", "En un primer empleo pesa más que la experiencia: muestra disposición, curiosidad y que aceptas retroalimentación."],
+    ["📌", "Ejemplos concretos", "No basta decir «soy responsable»: demuéstralo con algo que hiciste en la escuela, tu casa, un negocio o un voluntariado."],
+    ["🏢", "Que conozcas la empresa y el puesto", "Saber qué hacen, qué pide la vacante y por qué quieres trabajar ahí demuestra interés real."],
+    ["👥", "Trabajo en equipo y trato con otros", "Buscan a alguien que se lleve bien con compañeros y clientes, y que sepa pedir y dar ayuda."],
+    ["✅", "Honestidad", "No inventes experiencia. Reconocer lo que no sabes y explicar cómo lo aprenderías da confianza."],
+    ["📅", "Disponibilidad y compromiso", "Ten claros tus horarios, cómo llegarías y cuándo podrías empezar."],
+    ["❓", "Tus preguntas al final", "Hacer 1 o 2 preguntas sobre el puesto muestra interés y que te tomas en serio la oportunidad."]
+  ];
+
+  const CONSEJOS = {
+    "Antes": [
+      "Investiga la empresa: su página, redes sociales y reseñas.",
+      "Relee la vacante y tu CV: todo lo que diga tu CV te lo pueden preguntar.",
+      "Prepara 3 historias reales con el método SAR (abajo te explicamos cómo).",
+      "Ensaya en voz alta, aquí mismo con la práctica y la simulación.",
+      "Ten listos tu CV impreso o en PDF, tu identificación y la ruta o la conexión."
+    ],
+    "Durante": [
+      "Saluda por su nombre a quien te entrevista y agradece la oportunidad.",
+      "Escucha la pregunta completa; si necesitas pensar, di «déjame pensarlo un momento».",
+      "Habla de lo que hiciste tú («yo organicé…»), aunque haya sido en equipo.",
+      "Sé sincero si no sabes algo y explica cómo lo aprenderías.",
+      "No hables mal de nadie (escuela, maestros, trabajos anteriores)."
+    ],
+    "Después": [
+      "Envía un mensaje o correo de agradecimiento en las siguientes 24 horas.",
+      "Anota qué te preguntaron y qué te gustaría responder mejor.",
+      "Si no te contactan en el plazo que te dieron, pregunta con amabilidad por el resultado.",
+      "Cada entrevista es práctica: aunque no quedes, llegas mejor a la siguiente."
+    ]
+  };
+
+  const ERRORES_COMUNES = [
+    "Llegar tarde o conectarse sin probar antes la cámara y el micrófono.",
+    "No saber nada de la empresa ni del puesto.",
+    "Responder solo «sí» o «no», sin dar ejemplos.",
+    "Preguntar primero por el sueldo o las vacaciones (espera a que lo mencionen o al final).",
+    "Exagerar o inventar experiencia."
+  ];
+
+  const PREGUNTAS_PARA_HACER = [
+    "¿Cómo es un día normal en este puesto?",
+    "¿Qué capacitación reciben las personas que entran?",
+    "¿Qué esperan que logre en los primeros 3 meses?",
+    "¿Cuáles son los siguientes pasos del proceso?"
+  ];
+
+  function renderAprendizaje(vacante, perfil) {
+    const tiene = {};
+    (perfil.habilidades || []).forEach(function (h) { tiene[normalizar(h.nombre)] = h; });
+    const pedidas = vacante.habilidades || [];
+    const requeridas = pedidas.map(normalizar);
+    const clave = (perfil.habilidades || []).find(function (h) { return requeridas.indexOf(normalizar(h.nombre)) !== -1; }) ||
+      (perfil.habilidades || [])[0];
+
+    const bloque = function (titulo, abierto, contenido) {
+      const d = el("details", { class: "tarjeta bloque-aprendizaje" }, el("summary", null, el("h3", { text: titulo })), contenido);
+      d.open = !!abierto;
+      return d;
+    };
+
+    const fijan = bloque("🏢 En qué se fijan las empresas en una entrevista", true,
+      el("div", { class: "criterios" }, EN_QUE_SE_FIJAN.map(function (c) {
+        return el("div", { class: "criterio" }, el("span", { class: "criterio-icono", "aria-hidden": "true", text: c[0] }),
+          el("div", null, el("strong", { text: c[1] }), el("p", { text: c[2] })));
+      })));
+
+    const consejos = bloque("✅ Consejos: antes, durante y después", false,
+      el("div", { class: "consejos" }, Object.keys(CONSEJOS).map(function (momento) {
+        return el("div", { class: "consejo-columna" }, el("h4", { text: momento }),
+          el("ul", { class: "lista-check" }, CONSEJOS[momento].map(function (t) { return el("li", { text: t }); })));
+      })));
+
+    const sar = bloque("🧩 Cómo responder: el método SAR", false, [
+      el("p", { text: "Las preguntas de experiencia («cuéntame de una vez que…») se responden mejor en tres partes:" }),
+      el("ol", { class: "sar" },
+        el("li", null, el("strong", { text: "Situación: " }), "dónde estabas y qué pasaba."),
+        el("li", null, el("strong", { text: "Acción: " }), "qué hiciste tú, paso a paso."),
+        el("li", null, el("strong", { text: "Resultado: " }), "qué lograste o aprendiste, de preferencia con un número.")),
+      clave ? el("p", { class: "ejemplo-guia" },
+        el("strong", { text: "Empieza con algo tuyo: " }),
+        "«" + clave.evidencia + "». Cuéntalo como Situación, di qué Acción tomaste y cierra con el Resultado; así demuestras tu habilidad de " +
+        clave.nombre.toLowerCase() + ".") : null
+    ]);
+
+    const vacanteBloque = bloque("🎯 Para esta vacante: " + vacante.puesto + " en " + vacante.empresa, false, [
+      vacante.descripcion ? el("p", { text: vacante.descripcion }) : null,
+      pedidas.length ? el("p", { class: "pista-tipo", text: "Habilidades que pide la vacante (✓ = ya la tienes en tu perfil; prepara un ejemplo de cada una):" }) : null,
+      pedidas.length ? el("div", { class: "chips" }, pedidas.map(function (h) {
+        const si = !!tiene[normalizar(h)];
+        return el("span", { class: "chip" + (si ? " chip-destacado" : " chip-falta"), text: (si ? "✓ " : "○ ") + h });
+      })) : null,
+      el("h4", { text: "Errores comunes que debes evitar" }),
+      el("ul", { class: "lista-mejoras" }, ERRORES_COMUNES.map(function (t) { return el("li", { text: t }); })),
+      el("h4", { text: "Preguntas que puedes hacer al final" }),
+      el("ul", { class: "lista-check" }, PREGUNTAS_PARA_HACER.map(function (t) { return el("li", { text: t }); }))
+    ]);
+
+    $("#ent-aprendizaje").replaceChildren(fijan, consejos, sar, vacanteBloque);
+  }
+
+  // ---------- Simulación: 3 preguntas seguidas, calificación al final ----------
+  function mostrarEstadoSimulacion() {
+    const sim = estado.simulacion;
+    const enCurso = sim.preguntas.length && !sim.resultado;
+    $("#sim-inicio").hidden = !!(enCurso || sim.resultado);
+    $("#sim-pregunta-card").hidden = !enCurso;
+    $("#sim-resultado").hidden = !sim.resultado;
+  }
+
+  async function comenzarSimulacion() {
+    const e = estado.entrevista;
+    registrar("entrenador", "preparando tu simulación para " + e.vacante.empresa + "…");
+    const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: e.perfil, vacante: e.vacante, modo: "simulacion" }, function (x) {
+      return x && Array.isArray(x.preguntas) && x.preguntas.length > 0;
+    });
+    estado.simulacion = { preguntas: r.preguntas.slice(0, 3), i: 0, respuestas: [], resultado: null };
+    registrar("entrenador", "simulación lista: " + estado.simulacion.preguntas.length + " preguntas, sin pistas.");
+    renderSimPregunta();
+    mostrarEstadoSimulacion();
+    $("#sim-pregunta").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  function renderSimPregunta() {
+    const sim = estado.simulacion;
+    $("#sim-contador").textContent = "Pregunta " + (sim.i + 1) + " de " + sim.preguntas.length;
+    $("#sim-pregunta").textContent = sim.preguntas[sim.i].pregunta;
+    $("#sim-respuesta").value = "";
+    $("#btn-sim-responder").textContent = textoBotonSimulacion();
+    $("#sim-respuesta").focus({ preventScroll: true });
+  }
+
+  function textoBotonSimulacion() {
+    const sim = estado.simulacion;
+    return sim.i < sim.preguntas.length - 1 ? "Responder y continuar →" : "Terminar y ver mi calificación →";
+  }
+
+  async function responderSimulacion() {
+    const sim = estado.simulacion;
+    const respuesta = $("#sim-respuesta").value.trim();
+    if (respuesta.split(/\s+/).filter(Boolean).length < 3) {
+      avisar("Escribe o dicta tu respuesta antes de continuar.");
+      $("#sim-respuesta").focus();
+      return;
+    }
+    sim.respuestas[sim.i] = { pregunta: sim.preguntas[sim.i].pregunta, respuesta: respuesta };
+    if (sim.i < sim.preguntas.length - 1) {
+      sim.i++;
+      renderSimPregunta();
+      return;
+    }
+    // Última respuesta: el Entrenador evalúa la entrevista completa.
+    $("#btn-sim-responder").textContent = "Evaluando tu entrevista…";
+    registrar("entrenador", "evaluando tu entrevista completa…");
+    const e = estado.entrevista;
+    const r = await llamarAgente("entrenador_simulacion", "entrenador", { vacante: e.vacante, perfil: e.perfil, respuestas: sim.respuestas }, function (x) {
+      return x && typeof x.calificacion === "number" && Array.isArray(x.fortalezas) && Array.isArray(x.mejoras) && Array.isArray(x.por_pregunta);
+    });
+    sim.resultado = r;
+    registrar("entrenador", "simulación calificada: " + Math.round(r.calificacion) + "/10.");
+    renderResultadoSimulacion();
+    mostrarEstadoSimulacion();
+    $("#sim-resultado").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function estrellas(puntaje) {
+    const n = Math.max(0, Math.min(5, Math.round(puntaje)));
+    return "★".repeat(n) + "☆".repeat(5 - n);
+  }
+
+  function renderResultadoSimulacion() {
+    const sim = estado.simulacion, r = sim.resultado;
+    const nota = Math.max(1, Math.min(10, Math.round(r.calificacion)));
+    $("#sim-nota").textContent = nota;
+    $("#sim-resultado").dataset.nivel = nota >= 8 ? "alto" : nota >= 5 ? "medio" : "bajo";
+    $("#sim-estrellas").textContent = estrellas(nota / 2);
+    $("#sim-veredicto").textContent = r.veredicto;
+    $("#sim-fortalezas").replaceChildren.apply($("#sim-fortalezas"), r.fortalezas.map(function (t) { return el("li", { text: t }); }));
+    $("#sim-mejoras").replaceChildren.apply($("#sim-mejoras"), r.mejoras.map(function (t) { return el("li", { text: t }); }));
+    $("#sim-detalle").replaceChildren.apply($("#sim-detalle"), sim.preguntas.map(function (q, i) {
+      const ev = r.por_pregunta[i] || { puntaje: 0, comentario: "" };
+      return el("details", { class: "sim-item" },
+        el("summary", null, el("span", { text: "Pregunta " + (i + 1) + ": " + q.pregunta }),
+          el("span", { class: "sim-item-puntaje", text: estrellas(ev.puntaje) + " " + Math.round(ev.puntaje) + "/5" })),
+        el("p", null, el("strong", { text: "Tu respuesta: " }), (sim.respuestas[i] || {}).respuesta || ""),
+        el("p", null, el("strong", { text: "Observación: " }), ev.comentario),
+        q.que_busca ? el("p", { class: "pista-tipo" }, el("strong", { text: "Qué buscaba quien entrevista: " }), q.que_busca) : null);
+    }));
+  }
+
   function abrirEntrenamiento(preferida) {
     marcarFlujo("entrevista");
-    if (estado.preguntas.length && !preferida && estado.pasoEnt === 2) { irEnt(2); return; }
+    if (estado.preguntas.length && !preferida && estado.pasoEnt >= 2) { irEnt(estado.pasoEnt); return; }
     irEnt(1);
     if (preferida) prepararOpcionesEntrevista(preferida);
   }
@@ -1254,6 +1456,8 @@
     estado.perfil = null; estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
     estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = []; estado.contacto = {};
     estado.entrevista = { vacante: null, perfil: null }; estado.pasoEnt = 1; cvsParaEntrevista = [];
+    estado.simulacion = { preguntas: [], i: 0, respuestas: [], resultado: null };
+    $("#sim-respuesta").value = "";
     ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta", "#ent-nombre", "#ent-historia"].concat(CAMPOS_CV).forEach(function (s) { $(s).value = ""; });
     $("#lista-proyectos").replaceChildren();
     $("#lista-logros").replaceChildren();
@@ -1308,8 +1512,22 @@
     const bEmpezar = $("#btn-empezar-entrevista");
     bEmpezar.addEventListener("click", conCarga(bEmpezar, "Preparando entrevista…", empezarEntrevista));
     $("#btn-ent-volver").addEventListener("click", function () { irEnt(1); });
+    $$(".ir-simulacion").forEach(function (b) { b.addEventListener("click", function () { irEnt(3); }); });
+    $$(".ir-aprendizaje").forEach(function (b) { b.addEventListener("click", function () { irEnt(2); }); });
+    const bSimComenzar = $("#btn-sim-comenzar");
+    bSimComenzar.addEventListener("click", conCarga(bSimComenzar, "Preparando simulación…", comenzarSimulacion));
+    const bSimRepetir = $("#btn-sim-repetir");
+    bSimRepetir.addEventListener("click", conCarga(bSimRepetir, "Preparando simulación…", comenzarSimulacion));
+    const bSimResponder = $("#btn-sim-responder");
+    bSimResponder.addEventListener("click", async function () {
+      if (bSimResponder.disabled) return;
+      bSimResponder.disabled = true;
+      try { await responderSimulacion(); }
+      catch (e) { console.error(e); avisar("Algo salió mal: " + e.message); }
+      finally { bSimResponder.disabled = false; bSimResponder.textContent = textoBotonSimulacion(); }
+    });
+    $("#btn-sim-escuchar").addEventListener("click", function () { leerEnVoz($("#sim-pregunta").textContent); });
     $("#btn-otra-vacante").addEventListener("click", function () { irEnt(1); });
-    $("#btn-ir-cv").addEventListener("click", function () { irA(estado.paso || 1); });
     $("#btn-ent-ejemplo").addEventListener("click", function () {
       $("#ent-nombre").value = EJEMPLO.nombre;
       $("#ent-historia").value = EJEMPLO.historia;
@@ -1341,6 +1559,7 @@
 
     configurarDictado($("#btn-dictar"), $("#in-historia"), $("#estado-dictado"));
     configurarDictado($("#btn-ent-dictar"), $("#ent-historia"), $("#estado-ent-dictado"));
+    configurarDictado($("#btn-sim-voz"), $("#sim-respuesta"), $("#estado-sim-voz"));
     configurarDictado($("#btn-responder-voz"), $("#in-respuesta"), $("#estado-voz-respuesta"));
 
     if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); // precarga voces

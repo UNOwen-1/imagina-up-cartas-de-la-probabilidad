@@ -189,8 +189,40 @@
   }
 
   // ---------- Agente 4: Entrenador (preguntas) ----------
+  // Banco de preguntas para la simulación: una de cada tipo, elegidas al azar para que cada intento sea distinto.
+  const BANCO_SIMULACION = {
+    presentacion: [
+      { pregunta: "Para empezar, háblame de ti: ¿quién eres y por qué te postulas como {puesto}?", que_busca: "Que te presentes con seguridad en 1 minuto y conectes tu historia con el puesto." },
+      { pregunta: "¿Qué sabes de {empresa} y por qué te gustaría trabajar con nosotros?", que_busca: "Que hayas investigado la empresa y tengas un motivo real para elegirla." },
+      { pregunta: "Si tuvieras que describirte en tres palabras, ¿cuáles serían y por qué?", que_busca: "Autoconocimiento y que respaldes cada palabra con un ejemplo." }
+    ],
+    experiencia: [
+      { pregunta: "¿Cuál dirías que es tu mayor fortaleza para este puesto? Dame un ejemplo de cuándo la usaste.", que_busca: "Una fortaleza relevante demostrada con una situación real y su resultado." },
+      { pregunta: "Cuéntame de una vez que trabajaste en equipo para lograr algo. ¿Cuál fue tu papel?", que_busca: "Colaboración: qué aportaste tú, cómo te coordinaste y qué lograron." },
+      { pregunta: "Háblame de un reto o problema que hayas resuelto, en la escuela, tu casa o un negocio. ¿Qué hiciste?", que_busca: "Iniciativa y forma de resolver problemas, con un resultado concreto." },
+      { pregunta: "¿Qué es algo que estés mejorando de ti y qué estás haciendo para lograrlo?", que_busca: "Honestidad y madurez: reconocer un área de mejora y un plan para trabajarla." }
+    ],
+    situacional: [
+      { pregunta: "Imagina que en tu primera semana en {empresa} tienes varias tareas urgentes al mismo tiempo. ¿Cómo decides qué hacer primero?", que_busca: "Organización, criterio para priorizar y saber pedir apoyo." },
+      { pregunta: "Un cliente o compañero se molesta contigo por un error que no fue tuyo. ¿Qué haces?", que_busca: "Manejo de emociones, empatía y enfoque en la solución." },
+      { pregunta: "Te piden algo que nunca has hecho y tu jefe no está disponible. ¿Cómo lo resuelves?", que_busca: "Iniciativa, aprendizaje rápido y responsabilidad para avisar y preguntar." }
+    ]
+  };
+
+  function alAzar(lista) { return lista[Math.floor(Math.random() * lista.length)]; }
+
+  function rellenar(p, v) {
+    return {
+      pregunta: p.pregunta.replace("{puesto}", v.puesto).replace("{empresa}", v.empresa),
+      que_busca: p.que_busca
+    };
+  }
+
   function entrenador_preguntas(datos) {
     const v = datos.vacante;
+    if (datos.modo === "simulacion") {
+      return { preguntas: ["presentacion", "experiencia", "situacional"].map(function (t) { return rellenar(alAzar(BANCO_SIMULACION[t]), v); }) };
+    }
     const h = enFrase(habilidadClave(datos.perfil, v).nombre);
     return {
       preguntas: [
@@ -202,16 +234,24 @@
   }
 
   // ---------- Agente 4: Entrenador (evaluación) ----------
-  function entrenador_evaluar(datos) {
-    const r = String(datos.respuesta || "").trim();
+  // Rasgos de una respuesta que se fijan los reclutadores (heurística del modo demo).
+  function analizarRespuesta(respuesta, vacante) {
+    const r = String(respuesta || "").trim();
     const n = normalizar(r);
-    const palabras = r ? r.split(/\s+/).length : 0;
+    return {
+      palabras: r ? r.split(/\s+/).length : 0,
+      tieneEjemplo: /(una vez|por ejemplo|cuando |el ano pasado|en mi |me toco|tuve que)/.test(n),
+      tieneResultado: /(logr|result|aument|mejor|consegu|gracias a|termin|\d)/.test(n),
+      mencionaPuesto: n.indexOf(normalizar(vacante.empresa).split(" ")[0]) !== -1 ||
+        n.indexOf(normalizar(vacante.puesto).split(" ")[0]) !== -1,
+      actitud: /(aprend|pregunt|investig|practic|me esfuerz|ganas)/.test(n)
+    };
+  }
 
-    const tieneEjemplo = /(una vez|por ejemplo|cuando |el ano pasado|en mi |me toco|tuve que)/.test(n);
-    const tieneResultado = /(logr|result|aument|mejor|consegu|gracias a|termin|\d)/.test(n);
-    const mencionaPuesto = n.indexOf(normalizar(datos.vacante.empresa).split(" ")[0]) !== -1 ||
-      n.indexOf(normalizar(datos.vacante.puesto).split(" ")[0]) !== -1;
-    const actitud = /(aprend|pregunt|investig|practic|me esfuerz|ganas)/.test(n);
+  function entrenador_evaluar(datos) {
+    const a = analizarRespuesta(datos.respuesta, datos.vacante);
+    const palabras = a.palabras, tieneEjemplo = a.tieneEjemplo, tieneResultado = a.tieneResultado;
+    const mencionaPuesto = a.mencionaPuesto, actitud = a.actitud;
 
     let puntaje = 1;
     if (palabras >= 15) puntaje++;
@@ -246,12 +286,59 @@
     };
   }
 
+  // ---------- Agente 4: Entrenador (simulación completa) ----------
+  // Evalúa las 3 respuestas juntas: calificación de 1 a 10, fortalezas, mejoras y comentario por pregunta.
+  function entrenador_simulacion(datos) {
+    const v = datos.vacante;
+    const respuestas = datos.respuestas || [];
+    const evaluaciones = respuestas.map(function (r) {
+      return entrenador_evaluar({ pregunta: r.pregunta, respuesta: r.respuesta, vacante: v, perfil: datos.perfil });
+    });
+    const analisis = respuestas.map(function (r) { return analizarRespuesta(r.respuesta, v); });
+    const total = analisis.length || 1;
+    const cuenta = function (k) { return analisis.filter(function (a) { return a[k]; }).length; };
+    const promPalabras = Math.round(analisis.reduce(function (s, a) { return s + a.palabras; }, 0) / total);
+    const promPuntaje = evaluaciones.reduce(function (s, e) { return s + e.puntaje; }, 0) / total;
+    const calificacion = Math.max(1, Math.min(10, Math.round(promPuntaje * 2)));
+
+    const fortalezas = [];
+    if (cuenta("tieneEjemplo") >= 2) fortalezas.push("Respaldaste tus respuestas con ejemplos reales en " + cuenta("tieneEjemplo") + " de " + total + " preguntas.");
+    if (cuenta("tieneResultado") >= 2) fortalezas.push("Cerraste con resultados concretos: eso hace creíble lo que dices.");
+    if (cuenta("mencionaPuesto") >= 1) fortalezas.push("Conectaste tus respuestas con " + v.empresa + " y el puesto.");
+    if (cuenta("actitud") >= 1) fortalezas.push("Mostraste ganas de aprender, algo que las empresas valoran mucho en un primer empleo.");
+    if (promPalabras >= 35 && promPalabras <= 160) fortalezas.push("Tus respuestas tuvieron una buena extensión (unas " + promPalabras + " palabras en promedio).");
+    if (!fortalezas.length) fortalezas.push("Completaste la simulación de principio a fin: practicar así ya te da ventaja sobre quien llega sin prepararse.");
+
+    const mejoras = [];
+    if (promPalabras < 30) mejoras.push("Desarrolla más tus respuestas: promediaste " + promPalabras + " palabras. Apunta a 40–100 (entre 30 segundos y 1 minuto hablando).");
+    if (promPalabras > 160) mejoras.push("Sé más concreto: tus respuestas fueron largas. Ve directo a la situación, lo que hiciste y el resultado.");
+    if (cuenta("tieneEjemplo") < 2) mejoras.push("Usa el método SAR: cuenta una Situación real, la Acción que tomaste tú y el Resultado. Empieza con «Una vez, en…».");
+    if (cuenta("tieneResultado") < 2) mejoras.push("Termina cada historia con un resultado o aprendizaje, de preferencia con un número («atendí a más de 30 clientes al día»).");
+    if (!cuenta("mencionaPuesto")) mejoras.push("Investiga " + v.empresa + " antes de la entrevista y menciona por qué te interesa ese lugar y el puesto de " + v.puesto + ".");
+    if (!cuenta("actitud")) mejoras.push("Muestra tu disposición a aprender: di cómo te preparas o qué harías para aprender lo que aún no sabes.");
+    mejoras.push("Ensaya en voz alta y cuida tu lenguaje corporal: contacto visual, postura derecha y una sonrisa al saludar.");
+
+    const veredicto = calificacion >= 9 ? "¡Excelente! Llegarías a la entrevista con mucha seguridad."
+      : calificacion >= 7 ? "¡Muy bien! Con un par de ajustes tus respuestas van a destacar."
+      : calificacion >= 5 ? "Vas por buen camino. Practica las mejoras y repite la simulación."
+      : "Es un buen inicio. Lee la sección de aprendizaje, usa el método SAR y vuelve a intentarlo.";
+
+    return {
+      calificacion: calificacion,
+      veredicto: veredicto,
+      fortalezas: fortalezas.slice(0, 4),
+      mejoras: mejoras.slice(0, 4),
+      por_pregunta: evaluaciones.map(function (e) { return { puntaje: e.puntaje, comentario: e.lo_bueno + " " + e.mejorar }; })
+    };
+  }
+
   window.MotorLocal = {
     CATALOGO: CATALOGO,
     perfilador: perfilador,
     buscador: buscador,
     adaptador: adaptador,
     entrenador_preguntas: entrenador_preguntas,
-    entrenador_evaluar: entrenador_evaluar
+    entrenador_evaluar: entrenador_evaluar,
+    entrenador_simulacion: entrenador_simulacion
   };
 })();
