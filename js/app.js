@@ -622,15 +622,31 @@
     return "CV_" + base + ".tex";
   }
 
-  function descargarLatex() {
-    const blob = new Blob([window.CvLatex.generarLatex(datosDelCV())], { type: "application/x-tex;charset=utf-8" });
+  function descargarTexto(texto, nombre) {
+    const blob = new Blob([texto], { type: "application/x-tex;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const a = el("a", { href: url, download: nombreArchivoCV() });
+    const a = el("a", { href: url, download: nombre });
     document.body.append(a);
     a.click();
     a.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+  }
+
+  function descargarLatex() {
+    descargarTexto(window.CvLatex.generarLatex(datosDelCV()), nombreArchivoCV());
     avisar("Listo: compílalo con pdflatex o súbelo a Overleaf.");
+  }
+
+  // Imprime (o guarda como PDF) un CV guardado a partir de sus datos, con el diseño de la plantilla.
+  function imprimirCvGuardado(datos) {
+    const imprimible = $("#cv-imprimir");
+    imprimible.replaceChildren.apply(imprimible, window.CvLatex.generarHtml(datos, el));
+    avisar("Elige «Guardar como PDF» en la ventana de impresión.");
+    setTimeout(function () {
+      window.print();
+      // Devuelve la vista imprimible al CV en curso, si lo hay.
+      if (estado.cv && estado.vacante) renderCV(); else imprimible.replaceChildren();
+    }, 300);
   }
 
   // Overleaf acepta un documento enviado por formulario (POST a /docs) y lo compila a PDF.
@@ -840,7 +856,7 @@
         tex: window.CvLatex.generarLatex(datosDelCV()),
         datos: datosDelCV()
       });
-      registrar("adaptador", "guardé este CV en tu cuenta (" + (cv.tiene_pdf ? "PDF y .tex" : ".tex") + ").");
+      registrar("adaptador", "guardé este CV en tu cuenta" + (cv.tiene_pdf ? " (PDF y .tex)." : "."));
     } catch (e) {
       avisar("No se pudo guardar el CV en tu cuenta: " + e.message);
     }
@@ -933,6 +949,22 @@
         try { await window.Cuentas.eliminarCv(cv.id); avisar("CV eliminado."); cargarCvs(); }
         catch (e) { avisar("No se pudo eliminar: " + e.message); eliminar.disabled = false; }
       });
+      // Con servidor y pdflatex hay un PDF compilado; en el navegador se imprime desde los datos guardados.
+      let verPdf = null;
+      if (cv.tiene_pdf) {
+        verPdf = el("a", { class: "btn btn-secundario btn-chico", href: window.Cuentas.urlPdf(cv.id), target: "_blank", rel: "noopener" }, "👁 Ver PDF");
+      } else if (window.Cuentas.modo === "navegador") {
+        verPdf = el("button", { class: "btn btn-secundario btn-chico", type: "button" }, "👁 Ver / PDF");
+        verPdf.addEventListener("click", async function () {
+          try { imprimirCvGuardado((await window.Cuentas.obtenerCv(cv.id)).datos); }
+          catch (e) { avisar(e.message); }
+        });
+      }
+      const tex = el("button", { class: "btn btn-fantasma btn-chico", type: "button" }, "⬇ .tex");
+      tex.addEventListener("click", async function () {
+        try { descargarTexto(await window.Cuentas.leerTex(cv.id), nombreTex); }
+        catch (e) { avisar(e.message); }
+      });
       const overleaf = el("button", { class: "btn btn-fantasma btn-chico", type: "button" }, "↗ Overleaf");
       overleaf.addEventListener("click", async function () {
         try { enviarAOverleaf(await window.Cuentas.leerTex(cv.id), nombreTex); }
@@ -943,9 +975,7 @@
           el("strong", { text: cv.puesto || "CV" }),
           el("span", { text: (cv.empresa ? cv.empresa + " · " : "") + formatoFecha(cv.creado) })),
         el("div", { class: "acciones" },
-          cv.tiene_pdf ? el("a", { class: "btn btn-secundario btn-chico", href: window.Cuentas.urlPdf(cv.id), target: "_blank", rel: "noopener" }, "👁 Ver PDF") : null,
-          el("a", { class: "btn btn-fantasma btn-chico", href: window.Cuentas.urlTex(cv.id), download: nombreTex }, "⬇ .tex"),
-          overleaf, eliminar));
+          verPdf, tex, overleaf, eliminar));
     }));
   }
 
@@ -1017,7 +1047,7 @@
       await window.Cuentas.cambiarContrasena($("#mc-actual").value, $("#mc-nueva").value);
       form.reset();
       mostrarError(form, "");
-      avisar("Tu contraseña se cambió. Se cerraron tus otras sesiones.");
+      avisar("Tu contraseña se cambió." + (window.Cuentas.modo === "servidor" ? " Se cerraron tus otras sesiones." : ""));
     } catch (e) {
       mostrarError(form, e.message);
     }
@@ -1056,6 +1086,10 @@
 
     const s = await window.Cuentas.sesion();
     estado.cuentasDisponibles = s.disponible;
+    $("#nota-cuentas").textContent = s.modo === "navegador"
+      ? "🔒 Tu cuenta se guarda en este navegador y en este equipo. Para ver tus datos, entra siempre desde aquí."
+      : "🔒 Tu cuenta se guarda en el servidor de Despega de este equipo.";
+    if (!s.disponible && s.motivo) console.info("Cuentas no disponibles:", s.motivo);
     if (s.usuario) await iniciarConCuenta(s.usuario);
     else mostrarVista(s.disponible ? "acceso" : "app");  // sin servidor: modo invitado directo
   }
