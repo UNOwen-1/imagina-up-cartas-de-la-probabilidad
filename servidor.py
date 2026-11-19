@@ -5,6 +5,7 @@ Servidor local de Despega.
 - Sirve la página web (index.html, css/, js/) en http://localhost:8000
 - Expone POST /api/agente para que los 4 agentes usen Claude (IA real).
 - Si no hay SDK de Anthropic o no hay API key, la página funciona igual en "modo demo".
+- Expone /api/cuenta/* y /api/cvs/* para las cuentas (ver cuentas.py); datos en datos/despega.db.
 
 Uso:
     python servidor.py                 # modo demo o IA real (si hay API key)
@@ -15,11 +16,18 @@ Uso:
 
 import json
 import os
+import re
+import sqlite3
 import sys
 import threading
+import unicodedata
 import webbrowser
+from http.cookies import CookieError, SimpleCookie
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
+from urllib.parse import urlsplit
+
+import cuentas
 
 RAIZ = Path(__file__).resolve().parent
 PUERTO = int(os.environ.get("PORT", "8000"))
@@ -27,6 +35,7 @@ MODELO = os.environ.get("DESPEGA_MODELO", "claude-opus-5-5")
 # Modelos que aceptan el respaldo automático del servidor si el modelo rechaza una solicitud.
 MODELOS_CON_RESPALDO = {"claude-opus-5-5", "claude-opus-5", "claude-sonnet-5-5", "claude-fable-5-1", "claude-fable-5-2"}
 MAX_CUERPO = 300_000  # bytes
+COOKIE_SESION = "despega_sesion"
 
 try:
     import anthropic
@@ -286,23 +295,85 @@ class Manejador(SimpleHTTPRequestHandler):
         if "/api/" in (self.path or ""):
             sys.stderr.write("  [api] " + (formato % args) + "\n")
 
-    def responder_json(self, codigo: int, cuerpo: dict):
+    def responder_json(self, codigo: int, cuerpo, cookie: str | None = None):
         datos = json.dumps(cuerpo, ensure_ascii=False).encode("utf-8")
         self.send_response(codigo)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(datos)))
+        if cookie is not None:
+            self.send_header("Set-Cookie", cookie)
         self.end_headers()
         self.wfile.write(datos)
 
+    def responder_archivo(self, contenido: bytes, tipo: str, nombre: str, adjunto: bool):
+        self.send_response(200)
+        self.send_header("Content-Type", tipo)
+        self.send_header("Content-Length", str(len(contenido)))
+        self.send_header("Content-Disposition", ("attachment" if adjunto else "inline") + f'; filename="{nombre}"')
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.end_headers()
+        self.wfile.write(contenido)
+
+    # ---------- Sesión ----------
+    def token_sesion(self) -> str | None:
+        galletas = SimpleCookie()
+        try:
+            galletas.load(self.headers.get("Cookie", ""))
+        except CookieError:
+            return None
+        g = galletas.get(COOKIE_SESION)
+        return g.value if g else None
+
+    def usuario_actual(self):
+        return cuentas.usuario_de_token(self.token_sesion())
+
+    @staticmethod
+    def cookie_sesion(token: str | None) -> str:
+        if token is None:
+            return f"{COOKIE_SESION}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
+        return f"{COOKIE_SESION}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={cuentas.DURACION_SESION}"
+
+    def leer_json(self) -> dict:
+        if "application/json" not in self.headers.get("Content-Type", ""):
+            raise ValueError("se esperaba JSON")
+        largo = int(self.headers.get("Content-Length", "0"))
+        if largo <= 0 or largo > MAX_CUERPO:
+            raise ValueError("tamaño de solicitud inválido")
+        cuerpo = json.loads(self.rfile.read(largo).decode("utf-8"))
+        if not isinstance(cuerpo, dict):
+            raise ValueError("se esperaba un objeto JSON")
+        return cuerpo
+
+    # ---------- Rutas ----------
     def do_GET(self):
-        if self.path.split("?")[0] == "/api/estado":
-            self.responder_json(200, {"ia": IA_ACTIVA, "modelo": MODELO if IA_ACTIVA else None, "motivo": MOTIVO_SIN_IA})
+        ruta = urlsplit(self.path).path
+        if ruta == "/api/estado":
+            self.responder_json(200, {
+                "ia": IA_ACTIVA, "modelo": MODELO if IA_ACTIVA else None, "motivo": MOTIVO_SIN_IA,
+                "cuentas": True, "pdf": bool(cuentas.PDFLATEX),
+            })
+            return
+        if ruta.startswith("/api/"):
+            self.api_cuentas("GET", ruta, {})
+            return
+        # Solo se sirven los archivos de la página; nunca la base de datos ni el código del servidor.
+        if not (ruta in ("/", "/index.html") or re.fullmatch(r"/(css|js)/[\w\-.]+\.(css|js)", ruta)):
+            self.send_error(404)
             return
         super().do_GET()
 
+    def do_HEAD(self):
+        self.send_error(405)
+
     def do_POST(self):
-        if self.path.split("?")[0] != "/api/agente":
-            self.responder_json(404, {"error": "ruta no encontrada"})
+        ruta = urlsplit(self.path).path
+        if ruta != "/api/agente":
+            try:
+                cuerpo = self.leer_json()
+            except (ValueError, json.JSONDecodeError) as e:
+                self.responder_json(400, {"error": str(e)})
+                return
+            self.api_cuentas("POST", ruta, cuerpo)
             return
         if not IA_ACTIVA:
             self.responder_json(503, {"error": MOTIVO_SIN_IA})
@@ -329,6 +400,75 @@ class Manejador(SimpleHTTPRequestHandler):
         except json.JSONDecodeError:
             self.responder_json(502, {"error": "la IA devolvió un JSON inválido"})
 
+    def api_cuentas(self, metodo: str, ruta: str, cuerpo: dict):
+        try:
+            # Rutas sin sesión
+            if metodo == "POST" and ruta == "/api/cuenta/registro":
+                usuario, token = cuentas.registrar(cuerpo.get("nombre"), cuerpo.get("contrasena"))
+                self.responder_json(201, usuario, cookie=self.cookie_sesion(token))
+                return
+            if metodo == "POST" and ruta == "/api/cuenta/login":
+                usuario, token = cuentas.iniciar_sesion(cuerpo.get("nombre"), cuerpo.get("contrasena"))
+                self.responder_json(200, usuario, cookie=self.cookie_sesion(token))
+                return
+            if metodo == "POST" and ruta == "/api/cuenta/logout":
+                cuentas.cerrar_sesion(self.token_sesion())
+                self.responder_json(200, {"ok": True}, cookie=self.cookie_sesion(None))
+                return
+
+            # Rutas con sesión
+            usuario = self.usuario_actual()
+            if usuario is None:
+                self.responder_json(401, {"error": "Inicia sesión para continuar."})
+                return
+
+            if metodo == "GET" and ruta == "/api/cuenta":
+                self.responder_json(200, cuentas.publico(usuario))
+            elif metodo == "POST" and ruta == "/api/cuenta/datos":
+                self.responder_json(200, {"datos": cuentas.guardar_datos(usuario, cuerpo.get("datos"))})
+            elif metodo == "POST" and ruta == "/api/cuenta/nombre":
+                self.responder_json(200, {"nombre": cuentas.cambiar_nombre(usuario, cuerpo.get("nombre"))})
+            elif metodo == "POST" and ruta == "/api/cuenta/contrasena":
+                cuentas.cambiar_contrasena(usuario, cuerpo.get("actual"), cuerpo.get("nueva"), self.token_sesion())
+                self.responder_json(200, {"ok": True})
+            elif metodo == "POST" and ruta == "/api/cuenta/eliminar":
+                cuentas.eliminar_cuenta(usuario, cuerpo.get("contrasena"))
+                self.responder_json(200, {"ok": True}, cookie=self.cookie_sesion(None))
+            elif metodo == "GET" and ruta == "/api/cvs":
+                self.responder_json(200, {"cvs": cuentas.listar_cvs(usuario)})
+            elif metodo == "POST" and ruta == "/api/cvs":
+                cv = cuentas.guardar_cv(usuario, cuerpo.get("puesto"), cuerpo.get("empresa"), cuerpo.get("tex"), cuerpo.get("datos"))
+                self.responder_json(201, cv)
+            elif (m := re.fullmatch(r"/api/cvs/(\d+)/(tex|pdf|eliminar)", ruta)):
+                cv_id, accion = int(m.group(1)), m.group(2)
+                if metodo == "POST" and accion == "eliminar":
+                    cuentas.eliminar_cv(usuario, cv_id)
+                    self.responder_json(200, {"ok": True})
+                elif metodo == "GET" and accion in ("tex", "pdf"):
+                    cv = cuentas.obtener_cv(usuario, cv_id)
+                    base = f"CV_{nombre_archivo(cv['puesto']) or 'despega'}_{cv_id}"
+                    if accion == "tex":
+                        self.responder_archivo(cv["tex"].encode("utf-8"), "application/x-tex; charset=utf-8", base + ".tex", adjunto=True)
+                    elif cv["pdf"]:
+                        self.responder_archivo(bytes(cv["pdf"]), "application/pdf", base + ".pdf", adjunto=False)
+                    else:
+                        self.responder_json(404, {"error": "Este CV no tiene PDF (falta pdflatex en el servidor)."})
+                else:
+                    self.responder_json(404, {"error": "ruta no encontrada"})
+            else:
+                self.responder_json(404, {"error": "ruta no encontrada"})
+        except cuentas.ErrorCuenta as e:
+            self.responder_json(e.codigo, {"error": e.mensaje})
+        except sqlite3.Error as e:
+            sys.stderr.write(f"  [cuentas] error de base de datos: {e}\n")
+            self.responder_json(500, {"error": "No se pudo acceder a la base de datos."})
+
+
+def nombre_archivo(texto: str) -> str:
+    """Nombre ASCII seguro para Content-Disposition."""
+    sin_acentos = unicodedata.normalize("NFKD", texto or "").encode("ascii", "ignore").decode("ascii")
+    return re.sub(r"[^A-Za-z0-9]+", "_", sin_acentos).strip("_")[:40]
+
 
 def main():
     # Evita errores con emojis en consolas de Windows.
@@ -337,13 +477,15 @@ def main():
             flujo.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
-    servidor =ThreadingHTTPServer(("127.0.0.1", PUERTO), Manejador)
+    cuentas.iniciar()
+    servidor = ThreadingHTTPServer(("127.0.0.1", PUERTO), Manejador)
     url = f"http://localhost:{PUERTO}"
     print("\n  🚀 Despega está corriendo en " + url)
     if IA_ACTIVA:
         print(f"  🤖 IA real activada · modelo {MODELO}")
     else:
         print(f"  ⚡ Modo demo · {MOTIVO_SIN_IA}")
+    print(f"  👤 Cuentas guardadas en {cuentas.RUTA_BD}" + ("" if cuentas.PDFLATEX else " (sin pdflatex: los CV se guardan solo en .tex)"))
     print("  Presiona Ctrl+C para detener.\n")
     if os.environ.get("DESPEGA_NO_ABRIR") != "1":
         threading.Timer(0.8, lambda: webbrowser.open(url)).start()

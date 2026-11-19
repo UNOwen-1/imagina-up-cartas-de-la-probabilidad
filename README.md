@@ -81,11 +81,14 @@ Hackaton/
 ├── index.html          # La página (6 pasos + panel de agentes)
 ├── css/estilos.css     # Estilos: paleta y tipografías para aprendizaje
 ├── js/
-│   ├── app.js          # Lógica de la interfaz, voz y conexión con los agentes
+│   ├── app.js          # Lógica de la interfaz, voz, cuentas y conexión con los agentes
+│   ├── cuentas.js      # Cliente de la API de cuentas (sesión, datos y CV guardados)
 │   ├── cv-latex.js     # CV con la plantilla LaTeX (.tex, Overleaf y versión imprimible)
 │   ├── motor-local.js  # Los 4 agentes simulados (modo demo, sin internet)
 │   └── vacantes.js     # 30 vacantes de ejemplo (empresas ficticias)
-├── servidor.py         # Servidor local + agentes con Claude (opcional)
+├── servidor.py         # Servidor local + agentes con Claude (opcional) + API de cuentas
+├── cuentas.py          # Cuentas: usuarios, contraseñas (hash), sesiones y CV guardados (SQLite)
+├── datos/              # Se crea al usar cuentas: despega.db (NO se sube a git)
 ├── requirements.txt    # Dependencia para la IA real (anthropic)
 ├── iniciar.bat         # Doble clic para iniciar el servidor en Windows
 └── README.md
@@ -93,7 +96,15 @@ Hackaton/
 
 **Arquitectura:** cada agente es una llamada a la IA con sus propias instrucciones y un **esquema JSON** de salida. Los agentes se pasan el resultado en cadena: Perfil → Vacantes → CV → Entrevista. El motor local devuelve **exactamente el mismo JSON**, así la interfaz no distingue entre modos.
 
-**Datos:** no hay base de datos. Las vacantes viven en `js/vacantes.js` y el perfil vive en la memoria del navegador. No se guarda información personal.
+**Datos:** las vacantes viven en `js/vacantes.js`. Sin cuenta (modo invitado), el perfil solo vive en la memoria del navegador y no se guarda nada.
+
+**Cuentas:** al abrir Despega con el servidor, aparece la pantalla de acceso para **iniciar sesión** o **crear cuenta** con nombre completo y contraseña (también se puede **continuar sin cuenta**).
+- Con sesión iniciada se guardan automáticamente los datos del paso 1 (edad, historia, contacto, estudios), los proyectos y logros del paso 3, y **cada CV adaptado** (`.tex` y PDF compilado con `pdflatex` si está instalado).
+- Al volver a entrar, Despega se llena solo con esos datos.
+- En **Mi cuenta** (botón 👤 del encabezado) se ven, descargan o abren en Overleaf los CV guardados; se editan los datos, el nombre y la contraseña; y se puede cerrar sesión o eliminar la cuenta con todos sus CV.
+- Todo se guarda en `datos/despega.db` (SQLite) en la computadora que corre el servidor. Las contraseñas se guardan con hash PBKDF2 y sal, nunca en texto plano. La sesión usa una cookie `HttpOnly` que dura 30 días. Para usar otra ubicación: variable `DESPEGA_BD`.
+- El nombre para iniciar sesión no distingue mayúsculas ni acentos («José Pérez» = «jose perez»), así que dos cuentas no pueden tener el mismo nombre.
+- Abriendo `index.html` directamente (sin servidor) no hay cuentas: Despega funciona en modo invitado.
 
 **Habilidades personalizadas:** al agregar una habilidad, la persona elige si es **🛠️ Técnica** o **💬 Blanda**. Las que no estaban en el catálogo se guardan en el navegador (`localStorage`, clave `despega.habilidadesPersonalizadas`) y aparecen en las sugerencias la próxima vez, con su tipo. Para borrarlas, limpien los datos del sitio en el navegador.
 

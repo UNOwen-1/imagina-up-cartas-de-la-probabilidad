@@ -42,6 +42,8 @@
     vacante: null,
     cv: null,              // { resumen_adaptado, habilidades_destacadas, logros, cambios }
     contacto: {},          // { telefono, correo, ciudad, enlace } — solo para el CV, no se envía a la IA
+    cuenta: null,          // { nombre, datos } si hay sesión iniciada
+    cuentasDisponibles: false,
     preguntas: [],
     iPregunta: 0,
     puntajes: []
@@ -232,6 +234,7 @@
     estado.recomendaciones = []; estado.vacante = null; estado.cv = null; estado.preguntas = [];
     ["buscador", "adaptador", "entrenador"].forEach(function (a) { marcarAgente(a, "espera"); });
 
+    guardarEnCuenta({ edad: edad, historia: historia, contacto: estado.contacto, estudios: estado.perfil.estudios });
     registrar("perfilador", "encontré " + r.habilidades.length + " habilidades con evidencia.");
     renderHabilidades();
     $("#in-resumen").value = estado.perfil.resumen_profesional;
@@ -386,7 +389,8 @@
     }, "✕ Quitar");
   }
 
-  function agregarProyecto(datos) {
+  // contenedor: "#lista-proyectos" (paso 3) o "#mc-proyectos" (Mi cuenta).
+  function agregarProyecto(datos, contenedor, enfocar) {
     datos = datos || {};
     const fila = el("div", { class: "extra extra-proyecto" },
       el("div", { class: "fila-extra" },
@@ -397,11 +401,11 @@
         (datos.descripcion || []).join("\n"),
         { multilinea: true, placeholder: "Ej. Organicé la producción y venta; vendí más de 300 piezas en un semestre." }),
       botonQuitar("Quitar proyecto"));
-    $("#lista-proyectos").append(fila);
-    fila.querySelector("input").focus();
+    $(contenedor || "#lista-proyectos").append(fila);
+    if (enfocar) fila.querySelector("input").focus();
   }
 
-  function agregarLogro(datos) {
+  function agregarLogro(datos, contenedor, enfocar) {
     datos = datos || {};
     const fila = el("div", { class: "extra extra-logro" },
       el("div", { class: "fila-extra" },
@@ -409,13 +413,24 @@
         campoExtra("Resultado o detalle", "l-detalle", datos.detalle, { placeholder: "Ej. 2.º lugar" }),
         campoExtra("Año", "l-fecha", datos.fecha, { placeholder: "Ej. 2023", chico: true, max: 30 })),
       botonQuitar("Quitar logro"));
-    $("#lista-logros").append(fila);
-    fila.querySelector("input").focus();
+    $(contenedor || "#lista-logros").append(fila);
+    if (enfocar) fila.querySelector("input").focus();
   }
 
-  function leerExtras() {
+  function llenarExtras(selProyectos, selLogros, datos) {
+    $(selProyectos).replaceChildren();
+    $(selLogros).replaceChildren();
+    (datos.proyectos || []).forEach(function (p) { agregarProyecto(p, selProyectos, false); });
+    (datos.logros || []).forEach(function (l) { agregarLogro(l, selLogros, false); });
+  }
+
+  // Devuelve { proyectos, logros, sinNombre } leyendo los editores de las listas indicadas.
+  function leerExtras(selProyectos, selLogros) {
+    selProyectos = selProyectos || "#lista-proyectos";
+    selLogros = selLogros || "#lista-logros";
     const texto = function (fila, clase) { return fila.querySelector("." + clase).value.trim().replace(/[ \t]+/g, " "); };
-    const proyectos = $$("#lista-proyectos .extra").map(function (f) {
+    const filasP = $$(selProyectos + " .extra"), filasL = $$(selLogros + " .extra");
+    const proyectos = filasP.map(function (f) {
       return {
         nombre: texto(f, "p-nombre"),
         herramientas: texto(f, "p-herramientas"),
@@ -423,19 +438,19 @@
         descripcion: texto(f, "p-descripcion").split(/\n+/).map(function (l) { return l.replace(/^[-•*]\s*/, "").trim(); }).filter(Boolean).slice(0, 3)
       };
     }).filter(function (p) { return p.nombre; });
-    const logros = $$("#lista-logros .extra").map(function (f) {
+    const logros = filasL.map(function (f) {
       return { titulo: texto(f, "l-titulo"), detalle: texto(f, "l-detalle"), fecha: texto(f, "l-fecha") };
     }).filter(function (l) { return l.titulo; });
-    return { proyectos: proyectos, logros: logros };
+    return { proyectos: proyectos, logros: logros, sinNombre: filasP.length + filasL.length - proyectos.length - logros.length };
   }
 
   function guardarExtrasYBuscar() {
     const extras = leerExtras();
-    const sinNombre = $$("#lista-proyectos .extra, #lista-logros .extra").length - extras.proyectos.length - extras.logros.length;
-    if (sinNombre > 0) {
-      avisar("Hay " + sinNombre + " registro(s) sin nombre: escríbelo o quítalo.");
+    if (extras.sinNombre > 0) {
+      avisar("Hay " + extras.sinNombre + " registro(s) sin nombre: escríbelo o quítalo.");
       return;
     }
+    guardarEnCuenta({ proyectos: extras.proyectos, logros: extras.logros });
     estado.perfil.proyectos = extras.proyectos;
     estado.perfil.reconocimientos = extras.logros;
     const total = extras.proyectos.length + extras.logros.length;
@@ -532,6 +547,7 @@
     estado.cv = r;
     registrar("adaptador", "CV listo con " + r.cambios.length + " mejoras.");
     renderCV();
+    guardarCvEnCuenta();
     irA(5);
   }
 
@@ -619,9 +635,13 @@
 
   // Overleaf acepta un documento enviado por formulario (POST a /docs) y lo compila a PDF.
   function abrirEnOverleaf() {
+    enviarAOverleaf(window.CvLatex.generarLatex(datosDelCV()), nombreArchivoCV());
+  }
+
+  function enviarAOverleaf(tex, nombre) {
     const form = el("form", { action: "https://www.overleaf.com/docs", method: "post", target: "_blank" },
-      el("input", { type: "hidden", name: "snip", value: window.CvLatex.generarLatex(datosDelCV()) }),
-      el("input", { type: "hidden", name: "snip_name", value: nombreArchivoCV() }),
+      el("input", { type: "hidden", name: "snip", value: tex }),
+      el("input", { type: "hidden", name: "snip_name", value: nombre }),
       el("input", { type: "hidden", name: "engine", value: "pdflatex" }));
     document.body.append(form);
     form.submit();
@@ -760,6 +780,286 @@
     window.speechSynthesis.speak(u);
   }
 
+  // ---------- Cuentas ----------
+  // datos de la cuenta: { edad, historia, contacto:{telefono,correo,ciudad,enlace}, estudios:{escuela,nivel,periodo}, proyectos, logros }
+
+  function mostrarVista(vista) {
+    $("#acceso").hidden = vista !== "acceso";
+    $("#mi-cuenta").hidden = vista !== "cuenta";
+    $(".pasos").hidden = vista !== "app";
+    $(".distribucion").hidden = vista !== "app";
+    $("#btn-reiniciar").hidden = vista === "acceso";
+    actualizarEncabezado(vista);
+    window.scrollTo({ top: 0 });
+  }
+
+  function actualizarEncabezado(vista) {
+    $("#btn-cuenta").hidden = !estado.cuenta || vista === "cuenta";
+    $("#nombre-cuenta").textContent = estado.cuenta ? estado.cuenta.nombre.split(" ")[0] : "";
+    $("#btn-entrar").hidden = !!estado.cuenta || !estado.cuentasDisponibles || vista === "acceso";
+  }
+
+  function mostrarError(form, texto) {
+    const p = form.querySelector(".error-form");
+    p.textContent = texto || "";
+    p.hidden = !texto;
+  }
+
+  // Llena el paso 1 y el paso 3 con los datos guardados de la cuenta.
+  function llenarPasos(cuenta) {
+    const d = cuenta.datos || {}, c = d.contacto || {}, e = d.estudios || {};
+    const poner = function (sel, valor) { $(sel).value = valor == null ? "" : valor; };
+    poner("#in-nombre", cuenta.nombre);
+    poner("#in-edad", d.edad);
+    poner("#in-historia", d.historia);
+    poner("#in-telefono", c.telefono); poner("#in-correo", c.correo);
+    poner("#in-ciudad", c.ciudad); poner("#in-enlace", c.enlace);
+    poner("#in-escuela", e.escuela); poner("#in-nivel", e.nivel); poner("#in-periodo", e.periodo);
+    if (CAMPOS_CV.some(function (s) { return $(s).value; })) $(".datos-cv").open = true;
+    llenarExtras("#lista-proyectos", "#lista-logros", d);
+  }
+
+  // Combina los cambios con los datos guardados y los envía al servidor (sin bloquear el flujo).
+  async function guardarEnCuenta(cambios) {
+    if (!estado.cuenta) return;
+    const datos = Object.assign({}, estado.cuenta.datos, cambios);
+    try {
+      await window.Cuentas.guardarDatos(datos);
+      estado.cuenta.datos = datos;
+    } catch (e) {
+      avisar("No se pudieron guardar tus datos: " + e.message);
+    }
+  }
+
+  async function guardarCvEnCuenta() {
+    if (!estado.cuenta) return;
+    try {
+      const cv = await window.Cuentas.guardarCv({
+        puesto: estado.vacante.puesto,
+        empresa: estado.vacante.empresa,
+        tex: window.CvLatex.generarLatex(datosDelCV()),
+        datos: datosDelCV()
+      });
+      registrar("adaptador", "guardé este CV en tu cuenta (" + (cv.tiene_pdf ? "PDF y .tex" : ".tex") + ").");
+    } catch (e) {
+      avisar("No se pudo guardar el CV en tu cuenta: " + e.message);
+    }
+  }
+
+  async function iniciarConCuenta(usuario) {
+    estado.cuenta = { nombre: usuario.nombre, datos: usuario.datos || {} };
+    reiniciar();  // limpia el flujo y llena los pasos con los datos guardados
+    mostrarVista("app");
+  }
+
+  async function cerrarSesionLocal() {
+    estado.cuenta = null;
+    reiniciar();
+    $("#form-acceso").reset();
+    cambiarModoAcceso("entrar");
+    mostrarVista("acceso");
+  }
+
+  // --- Pantalla de acceso ---
+  let modoAcceso = "entrar";
+  function cambiarModoAcceso(modo) {
+    modoAcceso = modo;
+    const crear = modo === "crear";
+    $("#tab-entrar").classList.toggle("activa", !crear);
+    $("#tab-crear").classList.toggle("activa", crear);
+    $("#tab-entrar").setAttribute("aria-selected", String(!crear));
+    $("#tab-crear").setAttribute("aria-selected", String(crear));
+    $("#campo-confirmar").hidden = !crear;
+    $("#pista-contrasena").hidden = !crear;
+    $("#acc-contrasena").setAttribute("autocomplete", crear ? "new-password" : "current-password");
+    $("#btn-acceso").textContent = crear ? "Crear mi cuenta" : "Iniciar sesión";
+    mostrarError($("#form-acceso"), "");
+  }
+
+  async function enviarAcceso(ev) {
+    ev.preventDefault();
+    const form = $("#form-acceso");
+    const nombre = $("#acc-nombre").value.trim();
+    const contrasena = $("#acc-contrasena").value;
+    if (!nombre || !contrasena) { mostrarError(form, "Escribe tu nombre completo y tu contraseña."); return; }
+    if (modoAcceso === "crear" && contrasena !== $("#acc-confirmar").value) {
+      mostrarError(form, "Las contraseñas no coinciden.");
+      return;
+    }
+    const boton = $("#btn-acceso");
+    boton.disabled = true;
+    try {
+      const usuario = modoAcceso === "crear"
+        ? await window.Cuentas.registrar(nombre, contrasena)
+        : await window.Cuentas.entrar(nombre, contrasena);
+      mostrarError(form, "");
+      form.reset();
+      await iniciarConCuenta(usuario);
+      avisar(modoAcceso === "crear" ? "¡Listo! Tu cuenta se creó." : "Hola de nuevo, " + usuario.nombre.split(" ")[0] + ".");
+    } catch (e) {
+      mostrarError(form, e.message);
+    } finally {
+      boton.disabled = false;
+    }
+  }
+
+  // --- Mi cuenta ---
+  function formatoFecha(segundos) {
+    return new Date(segundos * 1000).toLocaleString("es-MX", { dateStyle: "medium", timeStyle: "short" });
+  }
+
+  async function cargarCvs() {
+    const lista = $("#lista-cvs");
+    lista.replaceChildren(el("p", { class: "vacio", text: "Cargando tus CV…" }));
+    let cvs;
+    try { cvs = await window.Cuentas.listarCvs(); }
+    catch (e) { lista.replaceChildren(el("p", { class: "vacio", text: "No se pudieron cargar tus CV: " + e.message })); return; }
+    if (!cvs.length) {
+      lista.replaceChildren(el("p", { class: "vacio", text: "Aún no tienes CV guardados. Elige una vacante en Despega y tu CV adaptado se guardará aquí." }));
+      return;
+    }
+    lista.replaceChildren.apply(lista, cvs.map(function (cv) {
+      const nombreTex = "CV_" + (cv.puesto || "despega").replace(/[^\wÀ-ÿ]+/g, "_") + ".tex";
+      const eliminar = el("button", { class: "btn btn-fantasma btn-chico", type: "button" }, "🗑 Eliminar");
+      eliminar.addEventListener("click", async function () {
+        // Confirmación en dos clics, sin ventanas emergentes.
+        if (!eliminar.dataset.confirmar) {
+          eliminar.dataset.confirmar = "1";
+          eliminar.textContent = "¿Seguro? Clic para eliminar";
+          eliminar.classList.add("btn-peligro");
+          return;
+        }
+        eliminar.disabled = true;
+        try { await window.Cuentas.eliminarCv(cv.id); avisar("CV eliminado."); cargarCvs(); }
+        catch (e) { avisar("No se pudo eliminar: " + e.message); eliminar.disabled = false; }
+      });
+      const overleaf = el("button", { class: "btn btn-fantasma btn-chico", type: "button" }, "↗ Overleaf");
+      overleaf.addEventListener("click", async function () {
+        try { enviarAOverleaf(await window.Cuentas.leerTex(cv.id), nombreTex); }
+        catch (e) { avisar(e.message); }
+      });
+      return el("div", { class: "cv-guardado" },
+        el("div", { class: "cv-guardado-info" },
+          el("strong", { text: cv.puesto || "CV" }),
+          el("span", { text: (cv.empresa ? cv.empresa + " · " : "") + formatoFecha(cv.creado) })),
+        el("div", { class: "acciones" },
+          cv.tiene_pdf ? el("a", { class: "btn btn-secundario btn-chico", href: window.Cuentas.urlPdf(cv.id), target: "_blank", rel: "noopener" }, "👁 Ver PDF") : null,
+          el("a", { class: "btn btn-fantasma btn-chico", href: window.Cuentas.urlTex(cv.id), download: nombreTex }, "⬇ .tex"),
+          overleaf, eliminar));
+    }));
+  }
+
+  function abrirMiCuenta() {
+    const c = estado.cuenta, d = c.datos || {}, ct = d.contacto || {}, e = d.estudios || {};
+    const poner = function (sel, valor) { $(sel).value = valor == null ? "" : valor; };
+    poner("#mc-nombre", c.nombre); poner("#mc-usuario-oculto", c.nombre);
+    poner("#mc-edad", d.edad); poner("#mc-historia", d.historia);
+    poner("#mc-telefono", ct.telefono); poner("#mc-correo", ct.correo);
+    poner("#mc-ciudad", ct.ciudad); poner("#mc-enlace", ct.enlace);
+    poner("#mc-escuela", e.escuela); poner("#mc-nivel", e.nivel); poner("#mc-periodo", e.periodo);
+    llenarExtras("#mc-proyectos", "#mc-logros", d);
+    ["#form-mis-datos", "#form-nombre", "#form-contrasena", "#form-eliminar"].forEach(function (f) { mostrarError($(f), ""); });
+    $("#form-contrasena").reset();
+    $("#form-eliminar").reset();
+    $(".zona-peligro").open = false;
+    mostrarVista("cuenta");
+    $("#t-mi-cuenta").focus({ preventScroll: true });
+    cargarCvs();
+  }
+
+  async function guardarMisDatos(ev) {
+    ev.preventDefault();
+    const form = $("#form-mis-datos");
+    const v = function (sel) { return $(sel).value.trim(); };
+    const extras = leerExtras("#mc-proyectos", "#mc-logros");
+    if (extras.sinNombre > 0) { mostrarError(form, "Hay " + extras.sinNombre + " proyecto(s) o logro(s) sin nombre: escríbelo o quítalo."); return; }
+    const datos = Object.assign({}, estado.cuenta.datos, {
+      edad: v("#mc-edad"),
+      historia: v("#mc-historia"),
+      contacto: { telefono: v("#mc-telefono"), correo: v("#mc-correo"), ciudad: v("#mc-ciudad"), enlace: v("#mc-enlace") },
+      estudios: { escuela: v("#mc-escuela"), nivel: v("#mc-nivel"), periodo: v("#mc-periodo") },
+      proyectos: extras.proyectos,
+      logros: extras.logros
+    });
+    try {
+      await window.Cuentas.guardarDatos(datos);
+      estado.cuenta.datos = datos;
+      llenarPasos(estado.cuenta);  // Despega usa los datos nuevos desde ya
+      mostrarError(form, "");
+      avisar("Tus datos se guardaron.");
+    } catch (e) {
+      mostrarError(form, e.message);
+    }
+  }
+
+  async function guardarNombre(ev) {
+    ev.preventDefault();
+    const form = $("#form-nombre");
+    try {
+      const anterior = estado.cuenta.nombre;
+      const r = await window.Cuentas.cambiarNombre($("#mc-nombre").value);
+      estado.cuenta.nombre = r.nombre;
+      $("#mc-nombre").value = r.nombre;
+      if ($("#in-nombre").value.trim() === anterior) $("#in-nombre").value = r.nombre;
+      actualizarEncabezado("cuenta");
+      mostrarError(form, "");
+      avisar("Tu nombre se actualizó.");
+    } catch (e) {
+      mostrarError(form, e.message);
+    }
+  }
+
+  async function guardarContrasena(ev) {
+    ev.preventDefault();
+    const form = $("#form-contrasena");
+    if ($("#mc-nueva").value !== $("#mc-confirmar").value) { mostrarError(form, "Las contraseñas nuevas no coinciden."); return; }
+    try {
+      await window.Cuentas.cambiarContrasena($("#mc-actual").value, $("#mc-nueva").value);
+      form.reset();
+      mostrarError(form, "");
+      avisar("Tu contraseña se cambió. Se cerraron tus otras sesiones.");
+    } catch (e) {
+      mostrarError(form, e.message);
+    }
+  }
+
+  async function eliminarCuenta(ev) {
+    ev.preventDefault();
+    const form = $("#form-eliminar");
+    try {
+      await window.Cuentas.eliminar($("#mc-eliminar-contrasena").value);
+      await cerrarSesionLocal();
+      avisar("Tu cuenta y tus CV se eliminaron.");
+    } catch (e) {
+      mostrarError(form, e.message);
+    }
+  }
+
+  async function configurarCuentas() {
+    $("#tab-entrar").addEventListener("click", function () { cambiarModoAcceso("entrar"); });
+    $("#tab-crear").addEventListener("click", function () { cambiarModoAcceso("crear"); });
+    $("#form-acceso").addEventListener("submit", enviarAcceso);
+    $("#btn-invitado").addEventListener("click", function () { mostrarVista("app"); });
+    $("#btn-entrar").addEventListener("click", function () { cambiarModoAcceso("entrar"); mostrarVista("acceso"); $("#acc-nombre").focus(); });
+    $("#btn-cuenta").addEventListener("click", abrirMiCuenta);
+    $("#btn-volver-app").addEventListener("click", function () { mostrarVista("app"); });
+    $("#mc-agregar-proyecto").addEventListener("click", function () { agregarProyecto(null, "#mc-proyectos", true); });
+    $("#mc-agregar-logro").addEventListener("click", function () { agregarLogro(null, "#mc-logros", true); });
+    $("#form-mis-datos").addEventListener("submit", guardarMisDatos);
+    $("#form-nombre").addEventListener("submit", guardarNombre);
+    $("#form-contrasena").addEventListener("submit", guardarContrasena);
+    $("#form-eliminar").addEventListener("submit", eliminarCuenta);
+    $("#btn-salir").addEventListener("click", async function () {
+      try { await window.Cuentas.salir(); } catch (e) { /* la sesión local se cierra igual */ }
+      await cerrarSesionLocal();
+    });
+
+    const s = await window.Cuentas.sesion();
+    estado.cuentasDisponibles = s.disponible;
+    if (s.usuario) await iniciarConCuenta(s.usuario);
+    else mostrarVista(s.disponible ? "acceso" : "app");  // sin servidor: modo invitado directo
+  }
+
   // ---------- Reinicio ----------
   function reiniciar() {
     estado.perfil = null; estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
@@ -769,6 +1069,7 @@
     $("#lista-logros").replaceChildren();
     Object.keys(AGENTES).forEach(function (a) { marcarAgente(a, "espera"); });
     $("#bitacora").replaceChildren();
+    if (estado.cuenta) llenarPasos(estado.cuenta);
     irA(1);
   }
 
@@ -801,8 +1102,8 @@
 
     $("#btn-aprobar-perfil").addEventListener("click", aprobarPerfil);
 
-    $("#btn-agregar-proyecto").addEventListener("click", function () { agregarProyecto(); });
-    $("#btn-agregar-logro").addEventListener("click", function () { agregarLogro(); });
+    $("#btn-agregar-proyecto").addEventListener("click", function () { agregarProyecto(null, "#lista-proyectos", true); });
+    $("#btn-agregar-logro").addEventListener("click", function () { agregarLogro(null, "#lista-logros", true); });
     const bGuardarExtras = $("#btn-guardar-extras");
     bGuardarExtras.addEventListener("click", conCarga(bGuardarExtras, "Buscando vacantes…", guardarExtrasYBuscar));
     const bOmitir = $("#btn-omitir-extras");
@@ -827,7 +1128,8 @@
       renderPregunta();
     });
 
-    $("#btn-reiniciar").addEventListener("click", reiniciar);
+    $("#btn-reiniciar").addEventListener("click", function () { reiniciar(); mostrarVista("app"); });
+    configurarCuentas();
 
     document.addEventListener("click", function (e) {
       const destino = e.target.closest("[data-ir]");
