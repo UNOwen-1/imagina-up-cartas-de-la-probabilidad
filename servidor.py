@@ -73,7 +73,7 @@ AGENTES = {
             "Tu trabajo: leer la historia de la persona y traducir lo que hace en su vida diaria (negocio familiar, escuela, "
             "redes sociales, voluntariado, hobbies, cuidados) a habilidades profesionales que valoran las empresas. "
             "Para cada habilidad, 'evidencia' debe ser una frase corta copiada o casi literal de la historia que la demuestre. "
-            "Clasifica cada habilidad como 'técnica', 'digital' o 'blanda'. Encuentra entre 4 y 10 habilidades. "
+            "Clasifica cada habilidad como 'técnica' o 'blanda'. Encuentra entre 4 y 10 habilidades. "
             "Cuando una habilidad coincida con alguna de esta lista, usa exactamente ese nombre: {catalogo}. "
             "El resumen_profesional es de 2 o 3 frases en primera persona del CV, sin exagerar. " + REGLAS_COMUNES
         ),
@@ -88,7 +88,7 @@ AGENTES = {
                         "type": "object",
                         "properties": {
                             "nombre": {"type": "string"},
-                            "categoria": {"type": "string", "enum": ["técnica", "digital", "blanda"]},
+                            "categoria": {"type": "string", "enum": ["técnica", "blanda"]},
                             "evidencia": {"type": "string"},
                         },
                         "required": ["nombre", "categoria", "evidencia"],

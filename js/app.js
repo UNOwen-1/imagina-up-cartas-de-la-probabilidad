@@ -231,6 +231,8 @@
     const cont = $("#lista-habilidades");
     cont.replaceChildren();
     estado.perfil.habilidades.forEach(function (h, i) {
+      // Solo hay dos categorías: cualquier valor distinto de "blanda" se muestra como técnica.
+      if (h.categoria !== "blanda") h.categoria = "técnica";
       const cat = normalizar(h.categoria);
       cont.append(
         el("div", { class: "habilidad", style: "animation-delay:" + (i * 60) + "ms" },
@@ -323,8 +325,7 @@
 
     const tipo = tipoElegido();
     const conocida = buscarConocida(nombre);
-    // Las habilidades digitales del catálogo se consideran técnicas; se conserva su etiqueta "digital".
-    const categoria = conocida && conocida.categoria === "digital" && tipo === "técnica" ? "digital" : tipo;
+    const categoria = tipo;
     const nombreFinal = conocida ? conocida.nombre : nombre.charAt(0).toUpperCase() + nombre.slice(1);
 
     estado.perfil.habilidades.push({ nombre: nombreFinal, categoria: categoria, evidencia: "Agregada por ti" });
@@ -343,7 +344,7 @@
       renderOpciones();
     }
 
-    registrar("perfilador", "agregaste «" + nombreFinal + "» (" + tipoVisible(categoria === "digital" ? "técnica" : categoria).toLowerCase() + ").");
+    registrar("perfilador", "agregaste «" + nombreFinal + "» (" + tipoVisible(categoria).toLowerCase() + ").");
     input.value = "";
     renderHabilidades();
     input.focus();

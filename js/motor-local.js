@@ -8,8 +8,8 @@
   const CATALOGO = [
     { nombre: "Atención al cliente", categoria: "blanda", patrones: ["client", "atiend", "atender", "atencion", "mostrador"], curso: "Curso gratuito en línea de servicio al cliente (3–4 horas) y practica con un familiar el saludo y la despedida." },
     { nombre: "Ventas", categoria: "blanda", patrones: ["vend", "ventas", " venta", "comision"], curso: "Video-curso gratuito de técnicas de venta básicas; practica cómo presentar un producto en 30 segundos." },
-    { nombre: "Marketing digital", categoria: "digital", patrones: ["redes", "instagram", "tiktok", "facebook", "marketing", "publicidad", "anuncio", "seguidores"], curso: "Certificado gratuito de fundamentos de marketing digital (hay varios en plataformas abiertas)." },
-    { nombre: "Creación de contenido", categoria: "digital", patrones: ["video", "reels", "contenido", "youtube", "publicaciones", "publico", "stream"], curso: "Crea 3 publicaciones de ejemplo para un negocio real y guárdalas como portafolio." },
+    { nombre: "Marketing digital", categoria: "técnica", patrones: ["redes", "instagram", "tiktok", "facebook", "marketing", "publicidad", "anuncio", "seguidores"], curso: "Certificado gratuito de fundamentos de marketing digital (hay varios en plataformas abiertas)." },
+    { nombre: "Creación de contenido", categoria: "técnica", patrones: ["video", "reels", "contenido", "youtube", "publicaciones", "publico", "stream"], curso: "Crea 3 publicaciones de ejemplo para un negocio real y guárdalas como portafolio." },
     { nombre: "Fotografía y video", categoria: "técnica", patrones: ["foto", "camara", "edito", "editar", "capcut", "grabo", "grabar"], curso: "Tutorial gratuito de edición de video en celular; arma un mini portafolio de 3 videos." },
     { nombre: "Excel", categoria: "técnica", patrones: ["excel", "hoja de calculo", "hojas de calculo", "sheets"], curso: "Curso gratuito de Excel básico: fórmulas SUMA, PROMEDIO, filtros y tablas (4–6 horas)." },
     { nombre: "Control de inventario", categoria: "técnica", patrones: ["inventario", "almacen", "stock", "mercancia", "surtir", "surto"], curso: "Aprende conceptos básicos de inventario: entradas, salidas y conteo físico." },
@@ -87,8 +87,8 @@
       if (frag) encontradas.push({ nombre: h.nombre, categoria: h.categoria, evidencia: recortar(frag, 110) });
     });
 
-    // Prioriza habilidades técnicas/digitales y limita a 8 para que el CV sea claro.
-    const orden = { "técnica": 0, "digital": 1, "blanda": 2 };
+    // Prioriza habilidades técnicas y limita a 8 para que el CV sea claro.
+    const orden = { "técnica": 0, "blanda": 1 };
     encontradas.sort(function (a, b) { return orden[a.categoria] - orden[b.categoria]; });
     let habilidades = encontradas.slice(0, 10);
 
