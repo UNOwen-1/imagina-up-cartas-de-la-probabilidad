@@ -1172,7 +1172,7 @@
     const sim = estado.simulacion;
     const respuesta = $("#sim-respuesta").value.trim();
     if (respuesta.split(/\s+/).filter(Boolean).length < 3) {
-      avisar("Escribe o dicta tu respuesta antes de continuar.");
+      avisar("Escribe tu respuesta antes de continuar.");
       $("#sim-respuesta").focus();
       return;
     }
@@ -1257,7 +1257,7 @@
   async function evaluarRespuesta() {
     const respuesta = $("#in-respuesta").value.trim();
     if (respuesta.split(/\s+/).filter(Boolean).length < 3) {
-      avisar("Escribe o dicta tu respuesta antes de evaluarla.");
+      avisar("Escribe tu respuesta antes de evaluarla.");
       $("#in-respuesta").focus();
       return;
     }
@@ -1420,57 +1420,7 @@
       el("div", { class: "acciones" }, eliminar));
   }
 
-  // ---------- Voz (Web Speech API) ----------
-  const Reconocimiento = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-  function configurarDictado(boton, destino, estadoEl) {
-    const textoOriginal = boton.textContent;
-    if (!Reconocimiento) {
-      boton.disabled = true;
-      boton.title = "Tu navegador no soporta dictado por voz. Usa Chrome o Edge.";
-      return;
-    }
-    let rec = null;
-    let huboError = false;
-    boton.addEventListener("click", function () {
-      if (rec) { rec.stop(); return; }
-      rec = new Reconocimiento();
-      rec.lang = "es-MX";
-      rec.interimResults = true;
-      rec.continuous = true;
-      huboError = false;
-      const base = destino.value.trim() ? destino.value.trim() + " " : "";
-      rec.onresult = function (e) {
-        let texto = "";
-        for (let i = 0; i < e.results.length; i++) texto += e.results[i][0].transcript;
-        destino.value = base + texto.trim();
-      };
-      rec.onerror = function (e) {
-        huboError = true;
-        estadoEl.hidden = false;
-        estadoEl.textContent = e.error === "not-allowed"
-          ? "⚠️ Permite el uso del micrófono en tu navegador para dictar."
-          : "⚠️ No se pudo usar el micrófono (" + e.error + "). Puedes escribir tu respuesta.";
-      };
-      rec.onend = function () {
-        rec = null;
-        boton.classList.remove("grabando");
-        boton.textContent = textoOriginal;
-        if (!huboError) estadoEl.hidden = true;
-      };
-      try {
-        rec.start();
-        boton.classList.add("grabando");
-        boton.textContent = "⏹ Detener";
-        estadoEl.hidden = false;
-        estadoEl.textContent = "🎙️ Escuchando… habla con naturalidad. Presiona «Detener» al terminar.";
-      } catch (err) {
-        rec = null;
-        avisar("No se pudo iniciar el micrófono.");
-      }
-    });
-  }
-
+  // ---------- Lectura de preguntas en voz alta ----------
   function leerEnVoz(texto) {
     if (!("speechSynthesis" in window)) { avisar("Tu navegador no puede leer en voz alta."); return; }
     window.speechSynthesis.cancel();
@@ -2084,10 +2034,6 @@
       if (destino) irA(Number(destino.dataset.ir));
     });
 
-    configurarDictado($("#btn-dictar"), $("#in-historia"), $("#estado-dictado"));
-    configurarDictado($("#btn-ent-dictar"), $("#ent-historia"), $("#estado-ent-dictado"));
-    configurarDictado($("#btn-sim-voz"), $("#sim-respuesta"), $("#estado-sim-voz"));
-    configurarDictado($("#btn-responder-voz"), $("#in-respuesta"), $("#estado-voz-respuesta"));
 
     if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); // precarga voces
   }

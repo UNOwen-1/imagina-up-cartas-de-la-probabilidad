@@ -241,7 +241,6 @@ input:focus, textarea:focus { border-color: var(--primario); outline: none; box-
   .pasos li.activo .num, .pasos li.hecho .num, .agente.trabajando .agente-estado { color: #0B1220; }
 }
 
-.estado-voz { margin: .6rem 0 0; font-size: .88rem; color: var(--texto-suave); }
 
 /* ---------- Habilidades ---------- */
 .habilidades { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .75rem; margin-bottom: 1.25rem; }
