@@ -1000,6 +1000,7 @@
     sim.resultado = r;
     registrar("entrenador", "simulación calificada: " + Math.round(r.calificacion) + "/10.");
     renderResultadoSimulacion();
+    guardarSimulacionEnCuenta();
     mostrarEstadoSimulacion();
     $("#sim-resultado").scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -1089,6 +1090,130 @@
       " promedio en la entrevista fue de " + promedio.toFixed(1) + " de 5. " +
       (promedio >= 4 ? "¡Tienes todo listo para postularte!" : "Practica una vez más con los consejos y vas a llegar con mucha más seguridad.");
     registrar("entrenador", "entrevista terminada. Promedio " + promedio.toFixed(1) + "/5.");
+  }
+
+  // ---------- Historial de calificaciones ----------
+  async function guardarSimulacionEnCuenta() {
+    const nota = $("#sim-guardado");
+    if (!estado.cuenta) {
+      nota.textContent = estado.cuentasDisponibles
+        ? "💡 Inicia sesión para guardar tus calificaciones y ver cómo mejoras con cada simulación."
+        : "";
+      return;
+    }
+    const sim = estado.simulacion, r = sim.resultado, v = estado.entrevista.vacante;
+    nota.textContent = "Guardando en tu historial…";
+    try {
+      await window.Cuentas.guardarEntrevista({
+        puesto: v.puesto,
+        empresa: v.empresa,
+        calificacion: Math.max(1, Math.min(10, Math.round(r.calificacion))),
+        veredicto: r.veredicto,
+        fortalezas: r.fortalezas,
+        mejoras: r.mejoras,
+        preguntas: sim.preguntas.map(function (q, i) {
+          const ev = r.por_pregunta[i] || {};
+          return { pregunta: q.pregunta, que_busca: q.que_busca || "", respuesta: (sim.respuestas[i] || {}).respuesta || "", puntaje: ev.puntaje || 0, comentario: ev.comentario || "" };
+        })
+      });
+      nota.textContent = "✅ Se guardó en tu historial de calificaciones (👤 Mi cuenta).";
+      registrar("entrenador", "guardé tu calificación en tu historial.");
+    } catch (e) {
+      nota.textContent = "No se pudo guardar en tu historial: " + e.message;
+    }
+  }
+
+  function fechaCorta(segundos) {
+    return new Date(segundos * 1000).toLocaleDateString("es-MX", { day: "numeric", month: "short" });
+  }
+
+  async function cargarHistorial() {
+    const cont = $("#historial-entrevistas");
+    cont.replaceChildren(el("p", { class: "vacio", text: "Cargando tu historial…" }));
+    let lista;
+    try { lista = await window.Cuentas.listarEntrevistas(); }
+    catch (e) { cont.replaceChildren(el("p", { class: "vacio", text: "No se pudo cargar tu historial: " + e.message })); return; }
+
+    if (!lista.length) {
+      const ir = el("button", { class: "btn btn-secundario btn-chico", type: "button" }, "🎤 Ir a entrenar mi entrevista");
+      ir.addEventListener("click", function () { mostrarVista("app"); abrirEntrenamiento(); });
+      cont.replaceChildren(el("div", { class: "vacio" },
+        el("p", { text: "Aún no tienes simulaciones. Termina una simulación de entrevista y tu calificación aparecerá aquí." }), ir));
+      return;
+    }
+
+    const notas = lista.map(function (e) { return e.calificacion; });           // más reciente primero
+    const promedio = notas.reduce(function (a, b) { return a + b; }, 0) / notas.length;
+    const ultima = notas[0], anterior = notas[1];
+    const cambio = anterior == null ? null : ultima - anterior;
+
+    const indicador = function (etiqueta, valor, detalle) {
+      return el("div", { class: "indicador" }, el("span", { class: "indicador-etiqueta", text: etiqueta }),
+        el("strong", { class: "indicador-valor", text: valor }), detalle ? el("span", { class: "indicador-detalle", text: detalle }) : null);
+    };
+    const indicadores = el("div", { class: "indicadores" },
+      indicador("Simulaciones", String(lista.length)),
+      indicador("Promedio", promedio.toFixed(1) + "/10"),
+      indicador("Mejor", Math.max.apply(null, notas) + "/10"),
+      indicador("Última", ultima + "/10",
+        cambio == null ? "Tu primera simulación" : cambio > 0 ? "▲ " + cambio + " vs. la anterior" : cambio < 0 ? "▼ " + Math.abs(cambio) + " vs. la anterior" : "= igual que la anterior"));
+
+    cont.replaceChildren(indicadores, graficaHistorial(lista.slice(0, 12).reverse()),
+      el("h4", { class: "historial-subtitulo", text: "Todas tus simulaciones" }),
+      el("div", { class: "historial-lista" }, lista.map(itemHistorial)));
+  }
+
+  // Barras de una sola serie (calificación por simulación, de la más antigua a la más reciente).
+  function graficaHistorial(entradas) {
+    const barras = entradas.map(function (e, i) {
+      const texto = fechaCorta(e.creado) + " · " + e.puesto + (e.empresa ? " en " + e.empresa : "") + ": " + e.calificacion + "/10";
+      const ultima = i === entradas.length - 1;
+      return el("div", { class: "barra-col" },
+        el("div", { class: "barra-area" },
+          el("div", { class: "barra", style: "height:" + (e.calificacion * 10) + "%", tabindex: "0", role: "img", "aria-label": texto, "data-tip": texto },
+            ultima ? el("span", { class: "barra-valor", text: String(e.calificacion) }) : null)),
+        el("span", { class: "barra-fecha", text: fechaCorta(e.creado) }));
+    });
+    return el("figure", { class: "grafica-historial" },
+      el("figcaption", { text: "Calificación de tus últimas " + entradas.length + " simulaciones (de 1 a 10)" }),
+      el("div", { class: "grafica-cuerpo" },
+        el("div", { class: "grafica-eje", "aria-hidden": "true" }, el("span", { text: "10" }), el("span", { text: "5" }), el("span", { text: "0" })),
+        el("div", { class: "grafica-barras" }, barras)));
+  }
+
+  function itemHistorial(e) {
+    const eliminar = el("button", { class: "btn btn-fantasma btn-chico", type: "button" }, "🗑 Eliminar");
+    eliminar.addEventListener("click", async function () {
+      if (!eliminar.dataset.confirmar) {
+        eliminar.dataset.confirmar = "1";
+        eliminar.textContent = "¿Seguro? Clic para eliminar";
+        eliminar.classList.add("btn-peligro");
+        return;
+      }
+      eliminar.disabled = true;
+      try { await window.Cuentas.eliminarEntrevista(e.id); avisar("Simulación eliminada del historial."); cargarHistorial(); }
+      catch (err) { avisar("No se pudo eliminar: " + err.message); eliminar.disabled = false; }
+    });
+    const nivel = e.calificacion >= 8 ? "alto" : e.calificacion >= 5 ? "medio" : "bajo";
+    return el("details", { class: "historial-item" },
+      el("summary", null,
+        el("span", { class: "historial-nota", "data-nivel": nivel, text: e.calificacion + "/10" }),
+        el("span", { class: "historial-info" }, el("strong", { text: e.puesto || "Entrevista" }),
+          el("span", { text: (e.empresa ? e.empresa + " · " : "") + formatoFecha(e.creado) }))),
+      e.veredicto ? el("p", { class: "historial-veredicto", text: e.veredicto }) : null,
+      el("div", { class: "sim-observaciones" },
+        el("div", null, el("h4", { text: "💪 Lo que hiciste bien" }),
+          el("ul", { class: "lista-check" }, (e.fortalezas || []).map(function (t) { return el("li", { text: t }); }))),
+        el("div", null, el("h4", { text: "🛠️ Observaciones de mejora" }),
+          el("ul", { class: "lista-mejoras" }, (e.mejoras || []).map(function (t) { return el("li", { text: t }); })))),
+      (e.preguntas || []).length ? el("div", { class: "historial-preguntas" }, e.preguntas.map(function (q, i) {
+        return el("div", { class: "historial-pregunta" },
+          el("p", null, el("strong", { text: "Pregunta " + (i + 1) + ": " }), q.pregunta,
+            el("span", { class: "sim-item-puntaje", text: " " + estrellas(q.puntaje) + " " + Math.round(q.puntaje) + "/5" })),
+          el("p", null, el("strong", { text: "Tu respuesta: " }), q.respuesta),
+          q.comentario ? el("p", null, el("strong", { text: "Observación: " }), q.comentario) : null);
+      })) : null,
+      el("div", { class: "acciones" }, eliminar));
   }
 
   // ---------- Voz (Web Speech API) ----------
@@ -1352,6 +1477,7 @@
     mostrarVista("cuenta");
     $("#t-mi-cuenta").focus({ preventScroll: true });
     cargarCvs();
+    cargarHistorial();
   }
 
   async function guardarMisDatos(ev) {

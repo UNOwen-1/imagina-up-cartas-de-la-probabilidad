@@ -473,6 +473,13 @@ class Manejador(SimpleHTTPRequestHandler):
             elif metodo == "POST" and ruta == "/api/cvs":
                 cv = cuentas.guardar_cv(usuario, cuerpo.get("puesto"), cuerpo.get("empresa"), cuerpo.get("tex"), cuerpo.get("datos"))
                 self.responder_json(201, cv)
+            elif metodo == "GET" and ruta == "/api/entrevistas":
+                self.responder_json(200, {"entrevistas": cuentas.listar_entrevistas(usuario)})
+            elif metodo == "POST" and ruta == "/api/entrevistas":
+                self.responder_json(201, cuentas.guardar_entrevista(usuario, cuerpo))
+            elif metodo == "POST" and (m := re.fullmatch(r"/api/entrevistas/(\d+)/eliminar", ruta)):
+                cuentas.eliminar_entrevista(usuario, int(m.group(1)))
+                self.responder_json(200, {"ok": True})
             elif (m := re.fullmatch(r"/api/cvs/(\d+)/(tex|pdf|datos|eliminar)", ruta)):
                 cv_id, accion = int(m.group(1)), m.group(2)
                 if metodo == "POST" and accion == "eliminar":
