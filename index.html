@@ -1,0 +1,246 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Despega · Tu primer empleo</title>
+  <meta name="description" content="Un equipo de agentes de IA que convierte lo que ya sabes hacer en tu primer empleo.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Lexend:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/estilos.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚀</text></svg>">
+</head>
+<body>
+  <a class="saltar" href="#contenido">Saltar al contenido</a>
+
+  <header class="encabezado">
+    <div class="marca">
+      <span class="marca-icono" aria-hidden="true">🚀</span>
+      <div>
+        <h1 class="marca-nombre">Despega</h1>
+        <p class="marca-lema">Tu equipo de IA para conseguir tu primer empleo</p>
+      </div>
+    </div>
+    <div class="encabezado-acciones">
+      <span id="insignia-modo" class="insignia" title="Modo de funcionamiento">Comprobando…</span>
+      <button id="btn-reiniciar" class="btn btn-fantasma btn-chico" type="button">↺ Empezar de nuevo</button>
+    </div>
+  </header>
+
+  <nav class="pasos" aria-label="Progreso">
+    <ol id="lista-pasos">
+      <li data-paso="1" class="activo"><span class="num">1</span><span class="txt">Tu historia</span></li>
+      <li data-paso="2"><span class="num">2</span><span class="txt">Tus habilidades</span></li>
+      <li data-paso="3"><span class="num">3</span><span class="txt">Vacantes</span></li>
+      <li data-paso="4"><span class="num">4</span><span class="txt">Tu CV</span></li>
+      <li data-paso="5"><span class="num">5</span><span class="txt">Entrevista</span></li>
+    </ol>
+  </nav>
+
+  <div class="distribucion">
+    <!-- Panel de agentes -->
+    <aside class="panel-agentes" aria-label="Tu equipo de agentes">
+      <h2 class="panel-titulo">Tu equipo</h2>
+      <ul class="agentes">
+        <li class="agente" data-agente="perfilador">
+          <span class="agente-avatar" aria-hidden="true">🧭</span>
+          <div class="agente-info"><strong>Perfilador</strong><small>Descubre tus habilidades</small></div>
+          <span class="agente-estado">En espera</span>
+        </li>
+        <li class="agente" data-agente="buscador">
+          <span class="agente-avatar" aria-hidden="true">🔎</span>
+          <div class="agente-info"><strong>Buscador</strong><small>Encuentra vacantes para ti</small></div>
+          <span class="agente-estado">En espera</span>
+        </li>
+        <li class="agente" data-agente="adaptador">
+          <span class="agente-avatar" aria-hidden="true">✍️</span>
+          <div class="agente-info"><strong>Adaptador</strong><small>Ajusta tu CV a la vacante</small></div>
+          <span class="agente-estado">En espera</span>
+        </li>
+        <li class="agente" data-agente="entrenador">
+          <span class="agente-avatar" aria-hidden="true">🎤</span>
+          <div class="agente-info"><strong>Entrenador</strong><small>Te prepara para la entrevista</small></div>
+          <span class="agente-estado">En espera</span>
+        </li>
+      </ul>
+      <h3 class="panel-subtitulo">Bitácora</h3>
+      <ol id="bitacora" class="bitacora" aria-live="polite"></ol>
+      <p class="nota-humano">👤 <strong>Tú decides:</strong> la IA propone y explica por qué; tú apruebas cada paso.</p>
+    </aside>
+
+    <main id="contenido" class="contenido" tabindex="-1">
+
+      <!-- PASO 1: Historia -->
+      <section id="paso-1" class="paso activo" aria-labelledby="t-paso-1">
+        <h2 id="t-paso-1">Cuéntanos de ti</h2>
+        <p class="ayuda">No necesitas experiencia formal. Cuéntanos lo que haces en tu día a día: ayudar en un negocio, la escuela, tus redes, voluntariados, hobbies… <strong>Todo cuenta.</strong></p>
+
+        <div class="tarjeta">
+          <div class="fila-campos">
+            <label class="campo">
+              <span>Tu nombre</span>
+              <input id="in-nombre" type="text" autocomplete="given-name" placeholder="Ej. Mariana López">
+            </label>
+            <label class="campo campo-chico">
+              <span>Edad</span>
+              <input id="in-edad" type="number" min="15" max="35" placeholder="20">
+            </label>
+          </div>
+          <label class="campo">
+            <span>Tu historia</span>
+            <textarea id="in-historia" rows="7" placeholder="Ej. Ayudo en la papelería de mi familia atendiendo clientes y cobrando en caja. También manejo el Instagram del negocio…"></textarea>
+          </label>
+          <div class="acciones">
+            <button id="btn-dictar" class="btn btn-secundario" type="button">🎤 Dictar con mi voz</button>
+            <button id="btn-ejemplo" class="btn btn-fantasma" type="button">✨ Usar ejemplo (Mariana)</button>
+            <button id="btn-analizar" class="btn btn-primario" type="button">Analizar mi historia →</button>
+          </div>
+          <p id="estado-dictado" class="estado-voz" hidden></p>
+        </div>
+      </section>
+
+      <!-- PASO 2: Habilidades -->
+      <section id="paso-2" class="paso" aria-labelledby="t-paso-2">
+        <h2 id="t-paso-2">Estas son tus habilidades</h2>
+        <p class="ayuda">El <strong>Perfilador</strong> encontró estas habilidades en tu historia. Cada una muestra <strong>de dónde salió</strong>. Quita las que no te representen o agrega otras.</p>
+
+        <div id="lista-habilidades" class="habilidades"></div>
+
+        <form id="form-agregar" class="tarjeta tarjeta-suave agregar-habilidad">
+          <label class="campo">
+            <span>Agregar otra habilidad o aptitud</span>
+            <input id="in-nueva-habilidad" type="text" placeholder="Ej. Inglés, Paciencia, Cocina…" list="catalogo-habilidades" autocomplete="off">
+          </label>
+          <datalist id="catalogo-habilidades"></datalist>
+
+          <fieldset class="selector-tipo">
+            <legend>¿De qué tipo es?</legend>
+            <div class="segmentado">
+              <input type="radio" name="tipo-habilidad" id="tipo-tecnica" value="técnica" checked>
+              <label for="tipo-tecnica">🛠️ Técnica</label>
+              <input type="radio" name="tipo-habilidad" id="tipo-blanda" value="blanda">
+              <label for="tipo-blanda">💬 Blanda</label>
+            </div>
+          </fieldset>
+
+          <button class="btn btn-secundario" type="submit">+ Agregar</button>
+          <p class="pista-tipo"><strong>Técnica:</strong> algo que sabes hacer (Excel, cocinar, editar videos). <strong>Blanda:</strong> cómo te relacionas y trabajas (puntualidad, paciencia, liderazgo). Las habilidades nuevas se guardan en tus opciones para la próxima vez.</p>
+        </form>
+
+        <label class="campo">
+          <span>Resumen profesional (puedes editarlo)</span>
+          <textarea id="in-resumen" rows="4"></textarea>
+        </label>
+
+        <div class="acciones acciones-final">
+          <button class="btn btn-fantasma" type="button" data-ir="1">← Volver</button>
+          <button id="btn-aprobar-perfil" class="btn btn-primario" type="button">✔ Aprobar y buscar vacantes →</button>
+        </div>
+      </section>
+
+      <!-- PASO 3: Vacantes -->
+      <section id="paso-3" class="paso" aria-labelledby="t-paso-3">
+        <h2 id="t-paso-3">Vacantes para ti</h2>
+        <p class="ayuda">El <strong>Buscador</strong> revisó <span id="total-vacantes">30</span> vacantes sin experiencia requerida y eligió las que mejor encajan contigo.</p>
+        <div id="lista-vacantes" class="vacantes"></div>
+        <div class="acciones acciones-final">
+          <button class="btn btn-fantasma" type="button" data-ir="2">← Volver</button>
+        </div>
+      </section>
+
+      <!-- PASO 4: CV -->
+      <section id="paso-4" class="paso" aria-labelledby="t-paso-4">
+        <h2 id="t-paso-4">Tu CV, adaptado a la vacante</h2>
+        <p class="ayuda">El <strong>Adaptador</strong> ajustó tu CV para <strong id="cv-vacante-nombre"></strong>. Compara el antes y el después.</p>
+
+        <div class="comparacion">
+          <article class="tarjeta cv cv-antes">
+            <span class="etiqueta etiqueta-gris">Antes · CV general</span>
+            <div id="cv-antes"></div>
+          </article>
+          <article class="tarjeta cv cv-despues">
+            <span class="etiqueta etiqueta-verde">Después · Adaptado</span>
+            <div id="cv-despues"></div>
+          </article>
+        </div>
+
+        <div class="tarjeta tarjeta-suave">
+          <h3>¿Qué cambió y por qué?</h3>
+          <ul id="lista-cambios" class="lista-check"></ul>
+        </div>
+
+        <div class="acciones acciones-final">
+          <button class="btn btn-fantasma" type="button" data-ir="3">← Elegir otra vacante</button>
+          <button id="btn-descargar" class="btn btn-secundario" type="button">⬇ Descargar CV (PDF)</button>
+          <button id="btn-aprobar-cv" class="btn btn-primario" type="button">✔ Aprobar y practicar entrevista →</button>
+        </div>
+      </section>
+
+      <!-- PASO 5: Entrevista -->
+      <section id="paso-5" class="paso" aria-labelledby="t-paso-5">
+        <h2 id="t-paso-5">Practica tu entrevista</h2>
+        <p class="ayuda">El <strong>Entrenador</strong> te hará 3 preguntas reales para <strong id="ent-vacante-nombre"></strong>. Responde con tu voz o escribiendo.</p>
+
+        <div id="entrevista" class="tarjeta">
+          <div class="progreso-pregunta"><span id="ent-contador">Pregunta 1 de 3</span></div>
+          <p id="ent-pregunta" class="pregunta"></p>
+          <p id="ent-busca" class="que-busca"></p>
+          <div class="acciones">
+            <button id="btn-escuchar" class="btn btn-fantasma btn-chico" type="button">🔊 Escuchar pregunta</button>
+          </div>
+          <label class="campo">
+            <span>Tu respuesta</span>
+            <textarea id="in-respuesta" rows="5" placeholder="Tip: cuenta una situación real, qué hiciste y qué lograste."></textarea>
+          </label>
+          <div class="acciones">
+            <button id="btn-responder-voz" class="btn btn-secundario" type="button">🎤 Responder con mi voz</button>
+            <button id="btn-evaluar" class="btn btn-primario" type="button">Evaluar mi respuesta</button>
+          </div>
+          <p id="estado-voz-respuesta" class="estado-voz" hidden></p>
+
+          <div id="ent-retro" class="retro" hidden>
+            <div class="retro-puntaje"><span id="ent-estrellas" aria-hidden="true"></span><strong id="ent-puntaje"></strong></div>
+            <p id="ent-bueno" class="retro-bueno"></p>
+            <p id="ent-mejorar" class="retro-mejorar"></p>
+            <details>
+              <summary>Ver una respuesta de ejemplo</summary>
+              <p id="ent-ejemplo"></p>
+            </details>
+            <div class="acciones">
+              <button id="btn-siguiente" class="btn btn-primario" type="button">Siguiente pregunta →</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="ent-final" class="tarjeta tarjeta-celebracion" hidden>
+          <p class="celebracion-emoji" aria-hidden="true">🎉</p>
+          <h3>¡Listo para despegar!</h3>
+          <p id="ent-resumen-final"></p>
+          <ul class="lista-check">
+            <li>Tienes un perfil con tus habilidades reales</li>
+            <li>Encontraste vacantes compatibles contigo</li>
+            <li>Tu CV está adaptado a la vacante</li>
+            <li>Practicaste tu entrevista</li>
+          </ul>
+          <div class="acciones">
+            <button class="btn btn-secundario" type="button" data-ir="4">Ver mi CV</button>
+            <button id="btn-otra-vez" class="btn btn-primario" type="button">Practicar otra vez</button>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- CV para imprimir / guardar como PDF -->
+  <div id="cv-imprimir" class="cv-imprimir" aria-hidden="true"></div>
+
+  <div id="aviso" class="aviso" role="status" hidden></div>
+
+  <footer class="pie">Demo de hackatón · Las vacantes y empresas son ficticias.</footer>
+
+  <script src="js/vacantes.js"></script>
+  <script src="js/motor-local.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

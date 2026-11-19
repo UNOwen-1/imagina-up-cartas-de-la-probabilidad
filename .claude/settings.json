@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "PowerShell(node --version)",
+      "PowerShell(npm --version)",
+      "Skill(claude-api)",
+      "Skill(claude-api:*)",
+      "PowerShell(python --version)",
+      "PowerShell(py --version)",
+      "PowerShell($edge = @\\(\"${env:ProgramFiles\\(x86\\)}\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\",\"$env:ProgramFiles\\\\Microsoft\\\\Edge\\\\Application\\\\msedge.exe\"\\) | Where-Object { Test-Path $_ } | Select-Object -First 1; $edge)"
+    ]
+  }
+}

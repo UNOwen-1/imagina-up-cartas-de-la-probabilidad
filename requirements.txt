@@ -1,0 +1,2 @@
+# Solo es necesario para el modo con IA real. El modo demo no requiere instalar nada.
+anthropic
