@@ -181,9 +181,10 @@
   function puedeIrA(n) {
     if (n <= 1) return true;
     if (n === 2) return !!estado.perfil;
-    if (n === 3) return estado.recomendaciones.length > 0;
-    if (n === 4) return !!estado.cv;
-    if (n === 5) return estado.preguntas.length > 0;
+    if (n === 3) return !!estado.perfil;
+    if (n === 4) return estado.recomendaciones.length > 0;
+    if (n === 5) return !!estado.cv;
+    if (n === 6) return estado.preguntas.length > 0;
     return false;
   }
 
@@ -361,10 +362,97 @@
     input.focus();
   }
 
-  // ---------- Paso 2 → Buscador ----------
-  async function buscarVacantes() {
+  // ---------- Paso 2 → Paso 3 ----------
+  function aprobarPerfil() {
     if (!estado.perfil.habilidades.length) { avisar("Agrega al menos una habilidad."); return; }
     estado.perfil.resumen_profesional = $("#in-resumen").value.trim() || estado.perfil.resumen_profesional;
+    irA(3);
+  }
+
+  // ---------- Paso 3: proyectos y logros (opcional) ----------
+  function campoExtra(etiqueta, clase, valor, opciones) {
+    opciones = opciones || {};
+    const control = opciones.multilinea
+      ? el("textarea", { class: clase, rows: 3, maxlength: 400, placeholder: opciones.placeholder || "" })
+      : el("input", { class: clase, type: "text", maxlength: opciones.max || 80, placeholder: opciones.placeholder || "" });
+    control.value = valor || "";
+    return el("label", { class: "campo" + (opciones.chico ? " campo-chico" : "") }, el("span", { text: etiqueta }), control);
+  }
+
+  function botonQuitar(texto) {
+    return el("button", {
+      class: "btn btn-fantasma btn-chico quitar-extra", type: "button", "aria-label": texto,
+      onclick: function (e) { e.currentTarget.closest(".extra").remove(); }
+    }, "✕ Quitar");
+  }
+
+  function agregarProyecto(datos) {
+    datos = datos || {};
+    const fila = el("div", { class: "extra extra-proyecto" },
+      el("div", { class: "fila-extra" },
+        campoExtra("Nombre del proyecto", "p-nombre", datos.nombre, { placeholder: "Ej. Venta de postres en la escuela" }),
+        campoExtra("Herramientas o tema", "p-herramientas", datos.herramientas, { placeholder: "Ej. Instagram, Excel" }),
+        campoExtra("Fecha", "p-fecha", datos.fecha, { placeholder: "Ej. 2024", chico: true, max: 30 })),
+      campoExtra("¿Qué hiciste y qué lograste? (una idea por renglón)", "p-descripcion",
+        (datos.descripcion || []).join("\n"),
+        { multilinea: true, placeholder: "Ej. Organicé la producción y venta; vendí más de 300 piezas en un semestre." }),
+      botonQuitar("Quitar proyecto"));
+    $("#lista-proyectos").append(fila);
+    fila.querySelector("input").focus();
+  }
+
+  function agregarLogro(datos) {
+    datos = datos || {};
+    const fila = el("div", { class: "extra extra-logro" },
+      el("div", { class: "fila-extra" },
+        campoExtra("Logro", "l-titulo", datos.titulo, { placeholder: "Ej. Torneo estatal de matemáticas" }),
+        campoExtra("Resultado o detalle", "l-detalle", datos.detalle, { placeholder: "Ej. 2.º lugar" }),
+        campoExtra("Año", "l-fecha", datos.fecha, { placeholder: "Ej. 2023", chico: true, max: 30 })),
+      botonQuitar("Quitar logro"));
+    $("#lista-logros").append(fila);
+    fila.querySelector("input").focus();
+  }
+
+  function leerExtras() {
+    const texto = function (fila, clase) { return fila.querySelector("." + clase).value.trim().replace(/[ \t]+/g, " "); };
+    const proyectos = $$("#lista-proyectos .extra").map(function (f) {
+      return {
+        nombre: texto(f, "p-nombre"),
+        herramientas: texto(f, "p-herramientas"),
+        fecha: texto(f, "p-fecha"),
+        descripcion: texto(f, "p-descripcion").split(/\n+/).map(function (l) { return l.replace(/^[-•*]\s*/, "").trim(); }).filter(Boolean).slice(0, 3)
+      };
+    }).filter(function (p) { return p.nombre; });
+    const logros = $$("#lista-logros .extra").map(function (f) {
+      return { titulo: texto(f, "l-titulo"), detalle: texto(f, "l-detalle"), fecha: texto(f, "l-fecha") };
+    }).filter(function (l) { return l.titulo; });
+    return { proyectos: proyectos, logros: logros };
+  }
+
+  function guardarExtrasYBuscar() {
+    const extras = leerExtras();
+    const sinNombre = $$("#lista-proyectos .extra, #lista-logros .extra").length - extras.proyectos.length - extras.logros.length;
+    if (sinNombre > 0) {
+      avisar("Hay " + sinNombre + " registro(s) sin nombre: escríbelo o quítalo.");
+      return;
+    }
+    estado.perfil.proyectos = extras.proyectos;
+    estado.perfil.reconocimientos = extras.logros;
+    const total = extras.proyectos.length + extras.logros.length;
+    if (total) registrar("perfilador", "agregaste " + extras.proyectos.length + " proyecto(s) y " + extras.logros.length + " logro(s) a tu CV.");
+    return buscarVacantes();
+  }
+
+  function omitirExtras() {
+    // Sin proyectos ni logros: el CV queda solo con perfil, educación, experiencia y habilidades.
+    estado.perfil.proyectos = [];
+    estado.perfil.reconocimientos = [];
+    return buscarVacantes();
+  }
+
+  // ---------- Paso 3 → Buscador ----------
+  async function buscarVacantes() {
+    if (!estado.perfil.habilidades.length) { avisar("Agrega al menos una habilidad."); return; }
 
     registrar("buscador", "revisando " + window.VACANTES.length + " vacantes…");
     const porId = {};
@@ -385,7 +473,7 @@
     }
     registrar("buscador", "las 3 mejores: " + estado.recomendaciones.map(function (x) { return x.compatibilidad + "%"; }).join(", ") + ".");
     renderVacantes();
-    irA(3);
+    irA(4);
   }
 
   function renderVacantes() {
@@ -444,7 +532,7 @@
     estado.cv = r;
     registrar("adaptador", "CV listo con " + r.cambios.length + " mejoras.");
     renderCV();
-    irA(4);
+    irA(5);
   }
 
   function renderCV() {
@@ -463,7 +551,8 @@
       el("h4", { text: "Habilidades" }),
       el("div", { class: "chips" }, p.habilidades.map(function (h) { return el("span", { class: "chip", text: h.nombre }); })),
       el("h4", { text: "Experiencia" }),
-      el("p", { text: historiaCorta })
+      el("p", { text: historiaCorta }),
+      el("div", null, seccionesExtra(p))
     );
 
     $("#cv-despues").replaceChildren(
@@ -476,8 +565,9 @@
         const clave = requeridas.indexOf(normalizar(h)) !== -1;
         return el("span", { class: "chip" + (clave ? " chip-destacado" : ""), text: (clave ? "★ " : "") + h });
       })),
-      el("h4", { text: "Experiencia y logros" }),
-      el("ul", null, cv.logros.map(function (l) { return el("li", { text: l }); }))
+      el("h4", { text: "Experiencia" }),
+      el("ul", null, cv.logros.map(function (l) { return el("li", { text: l }); })),
+      el("div", null, seccionesExtra(p))
     );
 
     $("#lista-cambios").replaceChildren.apply($("#lista-cambios"), (cv.cambios || []).map(function (c) { return el("li", { text: c }); }));
@@ -485,6 +575,25 @@
     // Versión para imprimir / guardar como PDF, con el mismo diseño que la plantilla LaTeX.
     const imprimible = $("#cv-imprimir");
     imprimible.replaceChildren.apply(imprimible, window.CvLatex.generarHtml(datosDelCV(), el));
+  }
+
+  // Proyectos y logros del paso 3 (vacío si se omitió).
+  function seccionesExtra(p) {
+    const nodos = [];
+    const unir = function (partes) { return partes.filter(Boolean).join(" · "); };
+    if (p.proyectos && p.proyectos.length) {
+      nodos.push(el("h4", { text: "Proyectos" }), el("ul", null, p.proyectos.map(function (pr) {
+        return el("li", null, el("strong", { text: pr.nombre }),
+          unir([pr.herramientas, pr.fecha]) ? " · " + unir([pr.herramientas, pr.fecha]) : "",
+          pr.descripcion.length ? el("br") : null, pr.descripcion.join(" "));
+      })));
+    }
+    if (p.reconocimientos && p.reconocimientos.length) {
+      nodos.push(el("h4", { text: "Logros" }), el("ul", null, p.reconocimientos.map(function (l) {
+        return el("li", null, el("strong", { text: l.titulo }), unir([l.detalle, l.fecha]) ? " · " + unir([l.detalle, l.fecha]) : "");
+      })));
+    }
+    return nodos;
   }
 
   // ---------- CV en LaTeX ----------
@@ -531,7 +640,7 @@
     registrar("entrenador", estado.preguntas.length + " preguntas listas. ¡Tú puedes!");
     $("#ent-vacante-nombre").textContent = estado.vacante.puesto + " en " + estado.vacante.empresa;
     renderPregunta();
-    irA(5);
+    irA(6);
   }
 
   function renderPregunta() {
@@ -656,6 +765,8 @@
     estado.perfil = null; estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
     estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = []; estado.contacto = {};
     ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta"].concat(CAMPOS_CV).forEach(function (s) { $(s).value = ""; });
+    $("#lista-proyectos").replaceChildren();
+    $("#lista-logros").replaceChildren();
     Object.keys(AGENTES).forEach(function (a) { marcarAgente(a, "espera"); });
     $("#bitacora").replaceChildren();
     irA(1);
@@ -688,8 +799,14 @@
 
     $("#form-agregar").addEventListener("submit", agregarHabilidad);
 
-    const bAprobar = $("#btn-aprobar-perfil");
-    bAprobar.addEventListener("click", conCarga(bAprobar, "Buscando vacantes…", buscarVacantes));
+    $("#btn-aprobar-perfil").addEventListener("click", aprobarPerfil);
+
+    $("#btn-agregar-proyecto").addEventListener("click", function () { agregarProyecto(); });
+    $("#btn-agregar-logro").addEventListener("click", function () { agregarLogro(); });
+    const bGuardarExtras = $("#btn-guardar-extras");
+    bGuardarExtras.addEventListener("click", conCarga(bGuardarExtras, "Buscando vacantes…", guardarExtrasYBuscar));
+    const bOmitir = $("#btn-omitir-extras");
+    bOmitir.addEventListener("click", conCarga(bOmitir, "Buscando vacantes…", omitirExtras));
 
     const bCV = $("#btn-aprobar-cv");
     bCV.addEventListener("click", conCarga(bCV, "Preparando entrevista…", prepararEntrevista));
