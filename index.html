@@ -68,13 +68,20 @@
   </section>
 
   <nav class="pasos" aria-label="Progreso">
+    <div class="flujos" role="tablist" aria-label="¿Qué quieres hacer?">
+      <button id="flujo-cv" class="flujo activo" type="button" role="tab" aria-selected="true">📄 Crear mi CV</button>
+      <button id="flujo-entrevista" class="flujo" type="button" role="tab" aria-selected="false">🎤 Entrenar entrevista</button>
+    </div>
     <ol id="lista-pasos">
       <li data-paso="1" class="activo"><span class="num">1</span><span class="txt">Tu historia</span></li>
       <li data-paso="2"><span class="num">2</span><span class="txt">Tus habilidades</span></li>
       <li data-paso="3"><span class="num">3</span><span class="txt">Proyectos y logros</span></li>
       <li data-paso="4"><span class="num">4</span><span class="txt">Vacantes</span></li>
       <li data-paso="5"><span class="num">5</span><span class="txt">Tu CV</span></li>
-      <li data-paso="6"><span class="num">6</span><span class="txt">Entrevista</span></li>
+    </ol>
+    <ol id="lista-pasos-ent" hidden>
+      <li data-paso="1" class="activo"><span class="num">1</span><span class="txt">Prepara tu práctica</span></li>
+      <li data-paso="2"><span class="num">2</span><span class="txt">Entrevista</span></li>
     </ol>
   </nav>
 
@@ -273,13 +280,64 @@
           <button id="btn-descargar" class="btn btn-secundario" type="button">⬇ Descargar CV (PDF)</button>
           <button id="btn-descargar-tex" class="btn btn-secundario" type="button">⬇ Descargar LaTeX (.tex)</button>
           <button id="btn-overleaf" class="btn btn-fantasma" type="button">↗ Abrir en Overleaf</button>
-          <button id="btn-aprobar-cv" class="btn btn-primario" type="button">✔ Aprobar y practicar entrevista →</button>
+        </div>
+
+        <div class="tarjeta tarjeta-celebracion cv-listo">
+          <p class="celebracion-emoji" aria-hidden="true">🎉</p>
+          <h3>¡Tu CV está listo!</h3>
+          <ul class="lista-check">
+            <li>Tienes un perfil con tus habilidades reales</li>
+            <li>Encontraste vacantes compatibles contigo</li>
+            <li>Tu CV está adaptado a la vacante</li>
+          </ul>
+          <p class="pista-tipo">¿Quieres llegar con más seguridad? Practica la entrevista en el flujo de entrenamiento.</p>
+          <div class="acciones">
+            <button id="btn-ir-entrenar" class="btn btn-secundario" type="button">🎤 Entrenar la entrevista para esta vacante →</button>
+            <button id="btn-otro-cv" class="btn btn-fantasma" type="button">↺ Crear otro CV</button>
+          </div>
         </div>
       </section>
 
-      <!-- PASO 6: Entrevista -->
-      <section id="paso-6" class="paso" aria-labelledby="t-paso-6">
-        <h2 id="t-paso-6">Practica tu entrevista</h2>
+      <!-- ENTRENAMIENTO 1: Preparar la práctica -->
+      <section id="ent-1" class="paso" aria-labelledby="t-ent-1">
+        <h2 id="t-ent-1">Entrena para tu entrevista</h2>
+        <p class="ayuda">El <strong>Entrenador</strong> te hará 3 preguntas reales para la vacante que elijas y te dirá qué mejorar. <strong>No necesitas haber hecho tu CV.</strong></p>
+
+        <div class="tarjeta">
+          <h3>1. ¿Para qué vacante quieres practicar?</h3>
+          <div id="ent-opciones" class="opciones-vacante" role="radiogroup" aria-label="Vacante para practicar"></div>
+          <label class="campo" id="campo-ent-catalogo" hidden>
+            <span>Elige la vacante</span>
+            <select id="ent-catalogo"></select>
+          </label>
+        </div>
+
+        <div id="ent-sobre-ti" class="tarjeta" hidden>
+          <h3>2. Cuéntanos de ti</h3>
+          <p class="pista-tipo">El Entrenador usa tus experiencias reales para hacerte preguntas y darte respuestas de ejemplo. Puedes ser breve.</p>
+          <label class="campo">
+            <span>Tu nombre</span>
+            <input id="ent-nombre" type="text" autocomplete="name" placeholder="Ej. Mariana López">
+          </label>
+          <label class="campo">
+            <span>Lo que haces en tu día a día</span>
+            <textarea id="ent-historia" rows="5" placeholder="Ej. Ayudo en la papelería de mi familia atendiendo clientes y cobrando en caja…"></textarea>
+          </label>
+          <div class="acciones">
+            <button id="btn-ent-dictar" class="btn btn-secundario btn-chico" type="button">🎤 Dictar con mi voz</button>
+            <button id="btn-ent-ejemplo" class="btn btn-fantasma btn-chico" type="button">✨ Usar ejemplo (Mariana)</button>
+          </div>
+          <p id="estado-ent-dictado" class="estado-voz" hidden></p>
+        </div>
+
+        <div class="acciones acciones-final">
+          <button id="btn-empezar-entrevista" class="btn btn-primario" type="button">Empezar entrevista →</button>
+        </div>
+      </section>
+
+      <!-- ENTRENAMIENTO 2: Entrevista -->
+      <section id="ent-2" class="paso" aria-labelledby="t-ent-2">
+        <h2 id="t-ent-2">Practica tu entrevista</h2>
         <p class="ayuda">El <strong>Entrenador</strong> te hará 3 preguntas reales para <strong id="ent-vacante-nombre"></strong>. Responde con tu voz o escribiendo.</p>
 
         <div id="entrevista" class="tarjeta">
@@ -315,18 +373,17 @@
 
         <div id="ent-final" class="tarjeta tarjeta-celebracion" hidden>
           <p class="celebracion-emoji" aria-hidden="true">🎉</p>
-          <h3>¡Listo para despegar!</h3>
+          <h3>¡Entrevista terminada!</h3>
           <p id="ent-resumen-final"></p>
-          <ul class="lista-check">
-            <li>Tienes un perfil con tus habilidades reales</li>
-            <li>Encontraste vacantes compatibles contigo</li>
-            <li>Tu CV está adaptado a la vacante</li>
-            <li>Practicaste tu entrevista</li>
-          </ul>
           <div class="acciones">
-            <button class="btn btn-secundario" type="button" data-ir="5">Ver mi CV</button>
             <button id="btn-otra-vez" class="btn btn-primario" type="button">Practicar otra vez</button>
+            <button id="btn-otra-vacante" class="btn btn-secundario" type="button">Practicar para otra vacante</button>
+            <button id="btn-ir-cv" class="btn btn-fantasma" type="button">📄 Ir a crear mi CV</button>
           </div>
+        </div>
+
+        <div class="acciones acciones-final">
+          <button id="btn-ent-volver" class="btn btn-fantasma" type="button">← Cambiar vacante</button>
         </div>
       </section>
     </main>

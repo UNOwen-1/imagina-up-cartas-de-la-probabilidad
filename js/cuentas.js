@@ -304,7 +304,10 @@
     listarCvs: function () { return pedir("GET", "/api/cvs").then(function (r) { return r.cvs; }); },
     guardarCv: function (cv) { return pedir("POST", "/api/cvs", cv); },
     eliminarCv: function (id) { return pedir("POST", ruta(id, "eliminar"), {}); },
-    obtenerCv: async function (id) { return { tex: await Servidor.leerTex(id), datos: null }; },
+    obtenerCv: async function (id) {
+      const r = await pedir("GET", ruta(id, "datos"));
+      return { datos: r.datos && Object.keys(r.datos).length ? r.datos : null };
+    },
     leerTex: async function (id) {
       const r = await fetch(ruta(id, "tex"), { credentials: "same-origin", cache: "no-store" });
       if (!r.ok) throw error("No se pudo leer el CV.", r.status);

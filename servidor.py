@@ -439,11 +439,14 @@ class Manejador(SimpleHTTPRequestHandler):
             elif metodo == "POST" and ruta == "/api/cvs":
                 cv = cuentas.guardar_cv(usuario, cuerpo.get("puesto"), cuerpo.get("empresa"), cuerpo.get("tex"), cuerpo.get("datos"))
                 self.responder_json(201, cv)
-            elif (m := re.fullmatch(r"/api/cvs/(\d+)/(tex|pdf|eliminar)", ruta)):
+            elif (m := re.fullmatch(r"/api/cvs/(\d+)/(tex|pdf|datos|eliminar)", ruta)):
                 cv_id, accion = int(m.group(1)), m.group(2)
                 if metodo == "POST" and accion == "eliminar":
                     cuentas.eliminar_cv(usuario, cv_id)
                     self.responder_json(200, {"ok": True})
+                elif metodo == "GET" and accion == "datos":
+                    cv = cuentas.obtener_cv(usuario, cv_id)
+                    self.responder_json(200, {"datos": json.loads(cv["datos"] or "{}")})
                 elif metodo == "GET" and accion in ("tex", "pdf"):
                     cv = cuentas.obtener_cv(usuario, cv_id)
                     base = f"CV_{nombre_archivo(cv['puesto']) or 'despega'}_{cv_id}"

@@ -44,6 +44,8 @@
     contacto: {},          // { telefono, correo, ciudad, enlace } — solo para el CV, no se envía a la IA
     cuenta: null,          // { nombre, datos } si hay sesión iniciada
     cuentasDisponibles: false,
+    flujo: "cv",           // "cv" (pasos 1–5) o "entrevista" (entrenamiento aparte)
+    entrevista: { vacante: null, perfil: null },  // vacante y perfil con los que se practica
     preguntas: [],
     iPregunta: 0,
     puntajes: []
@@ -186,23 +188,49 @@
     if (n === 3) return !!estado.perfil;
     if (n === 4) return estado.recomendaciones.length > 0;
     if (n === 5) return !!estado.cv;
-    if (n === 6) return estado.preguntas.length > 0;
     return false;
   }
 
-  function irA(n) {
-    if (!puedeIrA(n)) return;
-    estado.paso = n;
-    $$(".paso").forEach(function (s) { s.classList.toggle("activo", s.id === "paso-" + n); });
-    $$("#lista-pasos li").forEach(function (li) {
+  // Muestra la sección "prefijo-n" (paso-N del CV o ent-N del entrenamiento) y marca su barra de pasos.
+  function mostrarSeccion(prefijo, lista, n) {
+    $$(".paso").forEach(function (s) { s.classList.toggle("activo", s.id === prefijo + "-" + n); });
+    $$(lista + " li").forEach(function (li) {
       const p = Number(li.dataset.paso);
       li.classList.toggle("activo", p === n);
       li.classList.toggle("hecho", p < n);
       if (p === n) li.setAttribute("aria-current", "step"); else li.removeAttribute("aria-current");
     });
     window.scrollTo({ top: 0, behavior: "smooth" });
-    const titulo = $("#t-paso-" + n);
+    const titulo = $("#t-" + prefijo + "-" + n);
     if (titulo) { titulo.setAttribute("tabindex", "-1"); titulo.focus({ preventScroll: true }); }
+  }
+
+  function marcarFlujo(flujo) {
+    estado.flujo = flujo;
+    const cv = flujo === "cv";
+    $("#flujo-cv").classList.toggle("activo", cv);
+    $("#flujo-entrevista").classList.toggle("activo", !cv);
+    $("#flujo-cv").setAttribute("aria-selected", String(cv));
+    $("#flujo-entrevista").setAttribute("aria-selected", String(!cv));
+    $("#lista-pasos").hidden = !cv;
+    $("#lista-pasos-ent").hidden = cv;
+  }
+
+  // Flujo del CV (pasos 1–5).
+  function irA(n) {
+    if (!puedeIrA(n)) return;
+    estado.paso = n;
+    marcarFlujo("cv");
+    mostrarSeccion("paso", "#lista-pasos", n);
+  }
+
+  // Flujo de entrenamiento de entrevista (1: preparar, 2: entrevista).
+  function irEnt(n) {
+    if (n === 2 && !estado.preguntas.length) return;
+    estado.pasoEnt = n;
+    marcarFlujo("entrevista");
+    if (n === 1) prepararOpcionesEntrevista();
+    mostrarSeccion("ent", "#lista-pasos-ent", n);
   }
 
   // ---------- Paso 1 → Perfilador ----------
@@ -231,8 +259,8 @@
       resumen_profesional: r.resumen_profesional,
       habilidades: r.habilidades
     };
-    estado.recomendaciones = []; estado.vacante = null; estado.cv = null; estado.preguntas = [];
-    ["buscador", "adaptador", "entrenador"].forEach(function (a) { marcarAgente(a, "espera"); });
+    estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
+    ["buscador", "adaptador"].forEach(function (a) { marcarAgente(a, "espera"); });
 
     guardarEnCuenta({ edad: edad, historia: historia, contacto: estado.contacto, estudios: estado.perfil.estudios });
     registrar("perfilador", "encontré " + r.habilidades.length + " habilidades con evidencia.");
@@ -537,8 +565,6 @@
   // ---------- Paso 3 → Adaptador ----------
   async function elegirVacante(v) {
     estado.vacante = v;
-    estado.preguntas = [];
-    marcarAgente("entrenador", "espera");
     registrar("adaptador", "ajustando tu CV para " + v.puesto + "…");
 
     const r = await llamarAgente("adaptador", "adaptador", { perfil: estado.perfil, vacante: v }, function (x) {
@@ -664,19 +690,148 @@
     form.remove();
   }
 
-  // ---------- Paso 4 → Entrenador ----------
-  async function prepararEntrevista() {
-    registrar("entrenador", "preparando preguntas para " + estado.vacante.empresa + "…");
-    const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: estado.perfil, vacante: estado.vacante }, function (x) {
+  // ---------- Entrenamiento de entrevista (flujo aparte) ----------
+  // Fuentes de la vacante: el CV en curso, un CV guardado en la cuenta o cualquier vacante del catálogo.
+  let cvsParaEntrevista = [];
+
+  function opcionVacante(valor, titulo, detalle, marcada) {
+    const id = "ent-op-" + valor;
+    const input = el("input", { type: "radio", name: "ent-fuente", id: id, value: valor });
+    input.checked = !!marcada;
+    input.addEventListener("change", actualizarFuenteEntrevista);
+    return el("label", { class: "opcion-vacante", for: id }, input,
+      el("span", null, el("strong", { text: titulo }), detalle ? el("small", { text: detalle }) : null));
+  }
+
+  async function prepararOpcionesEntrevista(preferida) {
+    const cont = $("#ent-opciones");
+    const anterior = (document.querySelector('input[name="ent-fuente"]:checked') || {}).value;
+    const elegida = preferida || anterior;
+    const opciones = [];
+    if (estado.cv && estado.vacante) {
+      opciones.push({ valor: "actual", titulo: "📄 La vacante de tu CV actual", detalle: estado.vacante.puesto + " · " + estado.vacante.empresa });
+    }
+    cvsParaEntrevista.forEach(function (cv) {
+      opciones.push({ valor: "guardado-" + cv.id, titulo: "💾 CV guardado: " + (cv.puesto || "CV"), detalle: (cv.empresa || "") + " · " + formatoFecha(cv.creado) });
+    });
+    opciones.push({ valor: "catalogo", titulo: "🔎 Otra vacante del catálogo", detalle: window.VACANTES.length + " vacantes sin experiencia requerida" });
+    const valores = opciones.map(function (o) { return o.valor; });
+    const marcada = valores.indexOf(elegida) !== -1 ? elegida : valores[0];
+    cont.replaceChildren.apply(cont, opciones.map(function (o) { return opcionVacante(o.valor, o.titulo, o.detalle, o.valor === marcada); }));
+    actualizarFuenteEntrevista();
+
+    // Los CV guardados llegan después (pueden venir del servidor); se agregan sin perder la elección.
+    if (estado.cuenta && !preferida && !prepararOpcionesEntrevista.cargando) {
+      prepararOpcionesEntrevista.cargando = true;
+      try {
+        const lista = await window.Cuentas.listarCvs();
+        const cambio = lista.length !== cvsParaEntrevista.length;
+        cvsParaEntrevista = lista.slice(0, 5);
+        if (cambio) prepararOpcionesEntrevista((document.querySelector('input[name="ent-fuente"]:checked') || {}).value);
+      } catch (e) { /* sin CV guardados disponibles */ }
+      prepararOpcionesEntrevista.cargando = false;
+    }
+  }
+
+  function fuenteEntrevista() {
+    return (document.querySelector('input[name="ent-fuente"]:checked') || {}).value || "catalogo";
+  }
+
+  function actualizarFuenteEntrevista() {
+    const catalogo = fuenteEntrevista() === "catalogo";
+    $("#campo-ent-catalogo").hidden = !catalogo;
+    $("#ent-sobre-ti").hidden = !catalogo;
+    if (catalogo) {
+      // Precarga lo que ya se sabe de la persona (CV en curso o cuenta).
+      if (!$("#ent-nombre").value) $("#ent-nombre").value = (estado.perfil && estado.perfil.nombre !== "Tu nombre" && estado.perfil.nombre) || (estado.cuenta && estado.cuenta.nombre) || "";
+      if (!$("#ent-historia").value) $("#ent-historia").value = (estado.perfil && estado.perfil.historia) || (estado.cuenta && estado.cuenta.datos.historia) || "";
+    }
+  }
+
+  function llenarCatalogoEntrevista() {
+    const sel = $("#ent-catalogo");
+    sel.replaceChildren.apply(sel, window.VACANTES.map(function (v) {
+      return el("option", { value: v.id, text: v.puesto + " · " + v.empresa + " (" + v.ciudad + ")" });
+    }));
+  }
+
+  // Reconstruye perfil y vacante a partir de los datos de un CV guardado.
+  function perfilDesdeCvGuardado(d, puesto, empresa) {
+    const logros = (d.experiencia && d.experiencia.logros) || [];
+    const evidenciaDe = function (nombre) {
+      const n = normalizar(nombre);
+      return logros.find(function (l) { return normalizar(l).indexOf(n) !== -1; }) || logros[0] || d.perfil || "Lo aprendí en mi día a día";
+    };
+    const habilidades = (d.tecnicas || []).map(function (n) { return { nombre: n, categoria: "técnica", evidencia: evidenciaDe(n) }; })
+      .concat((d.blandas || []).map(function (n) { return { nombre: n, categoria: "blanda", evidencia: evidenciaDe(n) }; }));
+    const vacante = window.VACANTES.find(function (v) { return v.puesto === puesto && v.empresa === empresa; }) ||
+      { id: "", puesto: puesto || "el puesto", empresa: empresa || "la empresa", ciudad: "", modalidad: "", jornada: "", sueldo: "", habilidades: [], descripcion: "" };
+    return {
+      vacante: vacante,
+      perfil: {
+        nombre: d.nombre || (estado.cuenta && estado.cuenta.nombre) || "Tu nombre",
+        historia: logros.join(" "),
+        resumen_profesional: d.perfil || "",
+        habilidades: habilidades,
+        proyectos: d.proyectos || [],
+        reconocimientos: d.logros || []
+      }
+    };
+  }
+
+  async function empezarEntrevista() {
+    const fuente = fuenteEntrevista();
+    let vacante, perfil;
+
+    if (fuente === "actual") {
+      vacante = estado.vacante;
+      perfil = estado.perfil;
+    } else if (fuente.indexOf("guardado-") === 0) {
+      const cv = cvsParaEntrevista.find(function (c) { return "guardado-" + c.id === fuente; });
+      const guardado = await window.Cuentas.obtenerCv(cv.id);
+      if (!guardado.datos) { avisar("No se pudieron leer los datos de ese CV."); return; }
+      const r = perfilDesdeCvGuardado(guardado.datos, cv.puesto, cv.empresa);
+      vacante = r.vacante; perfil = r.perfil;
+    } else {
+      vacante = window.VACANTES.find(function (v) { return v.id === $("#ent-catalogo").value; });
+      const historia = $("#ent-historia").value.trim();
+      const nombre = $("#ent-nombre").value.trim();
+      if (estado.perfil && historia === estado.perfil.historia) {
+        perfil = estado.perfil;  // misma historia que el CV en curso: se reutilizan sus habilidades
+      } else {
+        if (historia.split(/\s+/).filter(Boolean).length < 8) {
+          avisar("Cuéntanos un poco más de ti (al menos un par de frases) para preparar tus preguntas.");
+          $("#ent-historia").focus();
+          return;
+        }
+        registrar("perfilador", "leyendo tu historia para la entrevista…");
+        const r = await llamarAgente("perfilador", "perfilador", { nombre: nombre, edad: "", historia: historia }, function (x) {
+          return x && Array.isArray(x.habilidades) && x.habilidades.length > 0;
+        });
+        perfil = { nombre: nombre || r.nombre || "Tu nombre", historia: historia, resumen_profesional: r.resumen_profesional, habilidades: r.habilidades };
+        registrar("perfilador", "encontré " + r.habilidades.length + " habilidades para usar en tus respuestas.");
+      }
+    }
+
+    estado.entrevista = { vacante: vacante, perfil: perfil };
+    registrar("entrenador", "preparando preguntas para " + vacante.empresa + "…");
+    const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: perfil, vacante: vacante }, function (x) {
       return x && Array.isArray(x.preguntas) && x.preguntas.length > 0;
     });
     estado.preguntas = r.preguntas.slice(0, 3);
     estado.iPregunta = 0;
     estado.puntajes = [];
     registrar("entrenador", estado.preguntas.length + " preguntas listas. ¡Tú puedes!");
-    $("#ent-vacante-nombre").textContent = estado.vacante.puesto + " en " + estado.vacante.empresa;
+    $("#ent-vacante-nombre").textContent = vacante.puesto + " en " + vacante.empresa;
     renderPregunta();
-    irA(6);
+    irEnt(2);
+  }
+
+  function abrirEntrenamiento(preferida) {
+    marcarFlujo("entrevista");
+    if (estado.preguntas.length && !preferida && estado.pasoEnt === 2) { irEnt(2); return; }
+    irEnt(1);
+    if (preferida) prepararOpcionesEntrevista(preferida);
   }
 
   function renderPregunta() {
@@ -701,7 +856,7 @@
     }
     const q = estado.preguntas[estado.iPregunta];
     const r = await llamarAgente("entrenador_evaluar", "entrenador", {
-      pregunta: q.pregunta, respuesta: respuesta, vacante: estado.vacante, perfil: estado.perfil
+      pregunta: q.pregunta, respuesta: respuesta, vacante: estado.entrevista.vacante, perfil: estado.entrevista.perfil
     }, function (x) { return x && typeof x.puntaje === "number" && x.lo_bueno; });
 
     const puntaje = Math.max(1, Math.min(5, Math.round(r.puntaje)));
@@ -728,7 +883,7 @@
     $("#entrevista").hidden = true;
     $("#ent-final").hidden = false;
     $("#ent-resumen-final").textContent =
-      (estado.perfil.nombre !== "Tu nombre" ? estado.perfil.nombre.split(" ")[0] + ", tu" : "Tu") +
+      (estado.entrevista.perfil.nombre !== "Tu nombre" ? estado.entrevista.perfil.nombre.split(" ")[0] + ", tu" : "Tu") +
       " promedio en la entrevista fue de " + promedio.toFixed(1) + " de 5. " +
       (promedio >= 4 ? "¡Tienes todo listo para postularte!" : "Practica una vez más con los consejos y vas a llegar con mucha más seguridad.");
     registrar("entrenador", "entrevista terminada. Promedio " + promedio.toFixed(1) + "/5.");
@@ -1098,7 +1253,8 @@
   function reiniciar() {
     estado.perfil = null; estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
     estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = []; estado.contacto = {};
-    ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta"].concat(CAMPOS_CV).forEach(function (s) { $(s).value = ""; });
+    estado.entrevista = { vacante: null, perfil: null }; estado.pasoEnt = 1; cvsParaEntrevista = [];
+    ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta", "#ent-nombre", "#ent-historia"].concat(CAMPOS_CV).forEach(function (s) { $(s).value = ""; });
     $("#lista-proyectos").replaceChildren();
     $("#lista-logros").replaceChildren();
     Object.keys(AGENTES).forEach(function (a) { marcarAgente(a, "espera"); });
@@ -1143,8 +1299,21 @@
     const bOmitir = $("#btn-omitir-extras");
     bOmitir.addEventListener("click", conCarga(bOmitir, "Buscando vacantes…", omitirExtras));
 
-    const bCV = $("#btn-aprobar-cv");
-    bCV.addEventListener("click", conCarga(bCV, "Preparando entrevista…", prepararEntrevista));
+    // Flujos: crear CV y entrenar entrevista.
+    llenarCatalogoEntrevista();
+    $("#flujo-cv").addEventListener("click", function () { irA(estado.paso || 1); });
+    $("#flujo-entrevista").addEventListener("click", function () { abrirEntrenamiento(); });
+    $("#btn-ir-entrenar").addEventListener("click", function () { abrirEntrenamiento("actual"); });
+    $("#btn-otro-cv").addEventListener("click", function () { reiniciar(); });
+    const bEmpezar = $("#btn-empezar-entrevista");
+    bEmpezar.addEventListener("click", conCarga(bEmpezar, "Preparando entrevista…", empezarEntrevista));
+    $("#btn-ent-volver").addEventListener("click", function () { irEnt(1); });
+    $("#btn-otra-vacante").addEventListener("click", function () { irEnt(1); });
+    $("#btn-ir-cv").addEventListener("click", function () { irA(estado.paso || 1); });
+    $("#btn-ent-ejemplo").addEventListener("click", function () {
+      $("#ent-nombre").value = EJEMPLO.nombre;
+      $("#ent-historia").value = EJEMPLO.historia;
+    });
 
     $("#btn-descargar").addEventListener("click", function () {
       avisar("Elige «Guardar como PDF» en la ventana de impresión.");
@@ -1171,6 +1340,7 @@
     });
 
     configurarDictado($("#btn-dictar"), $("#in-historia"), $("#estado-dictado"));
+    configurarDictado($("#btn-ent-dictar"), $("#ent-historia"), $("#estado-ent-dictado"));
     configurarDictado($("#btn-responder-voz"), $("#in-respuesta"), $("#estado-voz-respuesta"));
 
     if ("speechSynthesis" in window) window.speechSynthesis.getVoices(); // precarga voces
