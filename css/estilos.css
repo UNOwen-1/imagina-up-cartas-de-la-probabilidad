@@ -483,14 +483,17 @@ details p { background: var(--superficie-2); padding: .7rem .85rem; border-radiu
 .aprendizaje { display: grid; gap: .8rem; margin-bottom: 1.5rem; }
 .bloque-aprendizaje { margin: 0; padding: 0; }
 .bloque-aprendizaje > summary {
-  cursor: pointer; list-style: none; padding: 1rem 1.2rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  cursor: pointer; list-style: none; padding: 1rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem;
 }
 .bloque-aprendizaje > summary::-webkit-details-marker { display: none; }
 .bloque-aprendizaje > summary::after { content: "＋"; font-weight: 700; color: var(--primario-texto); flex: none; }
 .bloque-aprendizaje[open] > summary::after { content: "－"; }
 .bloque-aprendizaje > summary h3 { margin: 0; }
-.bloque-aprendizaje > :not(summary) { margin-left: 1.2rem; margin-right: 1.2rem; }
-.bloque-aprendizaje > :last-child { margin-bottom: 1.2rem; }
+/* El contenido va en un contenedor con su propio relleno, alineado con el título del bloque. */
+.bloque-cuerpo { padding: .2rem 1.5rem 1.4rem; }
+.bloque-cuerpo > :first-child { margin-top: 0; }
+.bloque-cuerpo > :last-child { margin-bottom: 0; }
+@media (max-width: 600px) { .bloque-cuerpo { padding: .2rem 1rem 1.1rem; } }
 .criterios { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .7rem; }
 .criterio { display: flex; gap: .6rem; padding: .7rem .8rem; border-radius: 12px; background: var(--superficie-2); }
 .criterio-icono { font-size: 1.3rem; line-height: 1.3; flex: none; }
