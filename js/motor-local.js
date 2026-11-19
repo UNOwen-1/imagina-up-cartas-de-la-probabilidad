@@ -321,31 +321,36 @@
     const casosBorde = /(vaci|caso borde|casos borde|casos limite|un solo|nulo|null|none|negativ|repetid|si no existe|no hay)/.test(n);
     const pasos = /(primero|luego|despues|recorr|por cada|mientras|itero|ciclo|si es|si no|al final)/.test(n);
 
-    // 1 punto base + extensión + idea clave + un paso específico de ESTE problema + complejidad.
-    // Así una explicación genérica (solo palabras clave) no llega a 5.
-    let puntaje = 1;
-    if (palabras >= 15) puntaje++;
+    // Calificación amable: 2 puntos por intentarlo y explicarlo, y se suma por la idea clave,
+    // por los pasos (específicos o en orden) y por complejidad, casos borde o una explicación amplia.
+    // La idea clave con un paso específico ya asegura 4; un intento con algo de detalle, 3.
+    let puntaje = 2;
     if (ideaClave) puntaje++;
-    if (pasosClave >= 1) puntaje++;
-    if (complejidad) puntaje++;
-    puntaje = Math.max(1, Math.min(5, puntaje));
+    if (pasosClave >= 1 || pasos) puntaje++;
+    if (complejidad || casosBorde || palabras >= 40) puntaje++;
+    if (ideaClave && pasosClave >= 1) puntaje = Math.max(puntaje, 4);
+    if (palabras >= 12) puntaje = Math.max(puntaje, 3);
+    puntaje = Math.max(2, Math.min(5, puntaje));
 
     const bueno = [];
     if (ideaClave) bueno.push("identificaste la idea clave de la solución");
-    if (pasos) bueno.push("explicaste los pasos en orden");
+    if (pasos || pasosClave >= 1) bueno.push("explicaste cómo recorres los datos");
     if (complejidad) bueno.push("mencionaste la complejidad");
     if (casosBorde) bueno.push("consideraste casos borde");
 
-    const mejorar = [];
-    if (palabras < 15) mejorar.push("explica con más detalle: qué estructura usas, cómo recorres los datos y qué devuelves");
-    if (!ideaClave && p) mejorar.push("piensa en esta pista: «" + p.pistas[p.pistas.length - 1] + "»");
-    if (!complejidad) mejorar.push("di la complejidad en tiempo y espacio (por ejemplo, O(n) y O(1))");
-    if (!casosBorde) mejorar.push("menciona casos borde (entrada vacía, un solo elemento, repetidos)");
+    // Áreas de oportunidad (no correcciones): sugerencias para llevar la explicación un paso más allá.
+    const oportunidades = [];
+    if (palabras < 15) oportunidades.push("contar con un poco más de detalle qué estructura usas, cómo recorres los datos y qué devuelves");
+    if (!ideaClave && p) oportunidades.push("explorar otro enfoque (esta pista puede inspirarte: «" + p.pistas[p.pistas.length - 1] + "»)");
+    if (!complejidad) oportunidades.push("sumar la complejidad en tiempo y espacio (por ejemplo, O(n) y O(1))");
+    if (!casosBorde) oportunidades.push("pensar en casos borde, como una entrada vacía, un solo elemento o valores repetidos");
 
     return {
       puntaje: puntaje,
-      lo_bueno: bueno.length ? "Bien: " + lista(bueno) + "." : "Te animaste a resolverlo: en la entrevista, explicar tu idea aunque tengas dudas vale mucho.",
-      mejorar: mejorar.length ? "Para mejorar: " + lista(mejorar) + "." : "¡Explicación muy completa! En la entrevista, acompáñala probando tu idea con un ejemplo a mano."
+      lo_bueno: bueno.length ? "Bien: " + lista(bueno) + "." : "¡Buen intento! Explicar tu idea en voz alta, aunque tengas dudas, es justo lo que se valora en una entrevista.",
+      mejorar: oportunidades.length
+        ? "Áreas de oportunidad: podrías " + lista(oportunidades.slice(0, 2)) + "."  // solo las 2 más útiles
+        : "Área de oportunidad: en la entrevista, acompaña tu idea probándola con un ejemplo a mano."
     };
   }
 
@@ -384,7 +389,7 @@
     if (!fortalezas.length) fortalezas.push("Completaste la simulación de principio a fin: practicar así ya te da ventaja sobre quien llega sin prepararse.");
 
     const mejoras = [];
-    if (problema && notaProblema < 4) mejoras.push("Repasa el problema «" + problema.titulo + "» en Aprendizaje y práctica. La idea clave: «" + problema.idea[0] + "»");
+    if (problema && notaProblema < 4) mejoras.push("Área de oportunidad en el problema «" + problema.titulo + "»: practícalo de nuevo en Aprendizaje y práctica; una idea que te puede servir: «" + problema.idea[0] + "»");
     if (promPalabras < 30) mejoras.push("Desarrolla más tus respuestas: promediaste " + promPalabras + " palabras. Apunta a 40–100 (entre 30 segundos y 1 minuto hablando).");
     if (promPalabras > 160) mejoras.push("Sé más concreto: tus respuestas fueron largas. Ve directo a la situación, lo que hiciste y el resultado.");
     if (cuenta("tieneEjemplo") < 2) mejoras.push("Usa el método SAR con tus proyectos: la Situación (qué había que resolver), la Acción técnica que tomaste tú y el Resultado. Empieza con «En mi proyecto de…».");
