@@ -24,9 +24,47 @@
     </div>
     <div class="encabezado-acciones">
       <span id="insignia-modo" class="insignia" title="Modo de funcionamiento">Comprobando…</span>
+      <button id="btn-entrar" class="btn btn-fantasma btn-chico" type="button" hidden>👤 Iniciar sesión</button>
+      <button id="btn-cuenta" class="btn btn-secundario btn-chico" type="button" hidden title="Mi cuenta">👤 <span id="nombre-cuenta"></span></button>
       <button id="btn-reiniciar" class="btn btn-fantasma btn-chico" type="button">↺ Empezar de nuevo</button>
     </div>
   </header>
+
+  <!-- Acceso: iniciar sesión o crear cuenta -->
+  <section id="acceso" class="acceso" aria-labelledby="t-acceso" hidden>
+    <div class="tarjeta acceso-tarjeta">
+      <h2 id="t-acceso">Te damos la bienvenida a Despega</h2>
+      <p class="ayuda">Con una cuenta, tus datos y tus CV quedan guardados para que los retomes y actualices cuando quieras.</p>
+
+      <div class="pestanas" role="tablist" aria-label="Tipo de acceso">
+        <button id="tab-entrar" class="pestana activa" type="button" role="tab" aria-selected="true">Iniciar sesión</button>
+        <button id="tab-crear" class="pestana" type="button" role="tab" aria-selected="false">Crear cuenta</button>
+      </div>
+
+      <form id="form-acceso" novalidate>
+        <label class="campo">
+          <span>Nombre completo</span>
+          <input id="acc-nombre" type="text" autocomplete="username" maxlength="80" placeholder="Ej. Mariana López García" required>
+        </label>
+        <label class="campo">
+          <span>Contraseña</span>
+          <input id="acc-contrasena" type="password" autocomplete="current-password" maxlength="128" required>
+        </label>
+        <label class="campo" id="campo-confirmar" hidden>
+          <span>Confirma tu contraseña</span>
+          <input id="acc-confirmar" type="password" autocomplete="new-password" maxlength="128">
+        </label>
+        <p id="pista-contrasena" class="pista-tipo" hidden>Usa al menos 8 caracteres. Si alguien más tiene tu mismo nombre, agrega tu segundo apellido.</p>
+        <p class="error-form" role="alert" hidden></p>
+        <button id="btn-acceso" class="btn btn-primario btn-ancho" type="submit">Iniciar sesión</button>
+      </form>
+
+      <div class="acceso-invitado">
+        <button id="btn-invitado" class="btn btn-fantasma" type="button">Continuar sin cuenta →</button>
+        <p class="pista-tipo">Sin cuenta, Despega funciona igual pero no guarda nada.</p>
+      </div>
+    </div>
+  </section>
 
   <nav class="pasos" aria-label="Progreso">
     <ol id="lista-pasos">
@@ -293,6 +331,87 @@
     </main>
   </div>
 
+  <!-- Mi cuenta: CV guardados y datos editables -->
+  <section id="mi-cuenta" class="mi-cuenta" aria-labelledby="t-mi-cuenta" hidden>
+    <div class="mi-cuenta-cabeza">
+      <h2 id="t-mi-cuenta" tabindex="-1">Mi cuenta</h2>
+      <button id="btn-volver-app" class="btn btn-primario" type="button">← Volver a Despega</button>
+    </div>
+
+    <div class="tarjeta">
+      <h3>📄 Tus CV guardados</h3>
+      <p class="pista-tipo">Se guardan solos cada vez que Despega adapta tu CV a una vacante.</p>
+      <div id="lista-cvs" class="lista-cvs"></div>
+    </div>
+
+    <form id="form-mis-datos" class="tarjeta campos-mitad" novalidate>
+      <h3>🗂️ Tus datos</h3>
+      <p class="pista-tipo">Con estos datos se llena Despega automáticamente al iniciar sesión. Cámbialos cuando quieras.</p>
+      <div class="fila-campos">
+        <label class="campo"><span>Edad</span><input id="mc-edad" type="number" min="15" max="35"></label>
+        <label class="campo"><span>Ciudad</span><input id="mc-ciudad" type="text" maxlength="80" autocomplete="address-level2"></label>
+      </div>
+      <label class="campo"><span>Tu historia</span><textarea id="mc-historia" rows="5" maxlength="4000"></textarea></label>
+      <div class="fila-campos">
+        <label class="campo"><span>Teléfono</span><input id="mc-telefono" type="tel" maxlength="30" autocomplete="tel"></label>
+        <label class="campo"><span>Correo</span><input id="mc-correo" type="email" maxlength="120" autocomplete="email"></label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo"><span>LinkedIn o portafolio</span><input id="mc-enlace" type="text" maxlength="150" autocomplete="url"></label>
+        <label class="campo"><span>Escuela</span><input id="mc-escuela" type="text" maxlength="100"></label>
+      </div>
+      <div class="fila-campos">
+        <label class="campo"><span>Estudios</span><input id="mc-nivel" type="text" maxlength="120"></label>
+        <label class="campo"><span>Periodo</span><input id="mc-periodo" type="text" maxlength="40"></label>
+      </div>
+
+      <h3>Proyectos</h3>
+      <div id="mc-proyectos" class="lista-extras"></div>
+      <button id="mc-agregar-proyecto" class="btn btn-secundario btn-chico" type="button">+ Agregar proyecto</button>
+      <h3 class="separado">Logros</h3>
+      <div id="mc-logros" class="lista-extras"></div>
+      <button id="mc-agregar-logro" class="btn btn-secundario btn-chico" type="button">+ Agregar logro</button>
+
+      <p class="error-form" role="alert" hidden></p>
+      <div class="acciones acciones-final">
+        <button class="btn btn-primario" type="submit">💾 Guardar mis datos</button>
+      </div>
+    </form>
+
+    <div class="cuenta-ajustes">
+      <form id="form-nombre" class="tarjeta" novalidate>
+        <h3>Nombre de la cuenta</h3>
+        <label class="campo"><span>Nombre completo</span><input id="mc-nombre" type="text" maxlength="80" autocomplete="name"></label>
+        <p class="pista-tipo">Con este nombre inicias sesión y es el que aparece en tu CV.</p>
+        <p class="error-form" role="alert" hidden></p>
+        <button class="btn btn-secundario" type="submit">Guardar nombre</button>
+      </form>
+
+      <form id="form-contrasena" class="tarjeta" novalidate>
+        <h3>Cambiar contraseña</h3>
+        <input type="text" autocomplete="username" hidden aria-hidden="true" tabindex="-1" id="mc-usuario-oculto">
+        <label class="campo"><span>Contraseña actual</span><input id="mc-actual" type="password" autocomplete="current-password" maxlength="128"></label>
+        <label class="campo"><span>Nueva contraseña</span><input id="mc-nueva" type="password" autocomplete="new-password" maxlength="128"></label>
+        <label class="campo"><span>Confirma la nueva</span><input id="mc-confirmar" type="password" autocomplete="new-password" maxlength="128"></label>
+        <p class="error-form" role="alert" hidden></p>
+        <button class="btn btn-secundario" type="submit">Cambiar contraseña</button>
+      </form>
+    </div>
+
+    <div class="acciones acciones-final cuenta-pie">
+      <details class="zona-peligro">
+        <summary>Eliminar mi cuenta</summary>
+        <form id="form-eliminar" novalidate>
+          <p>Se borran para siempre tu cuenta, tus datos y todos tus CV guardados.</p>
+          <label class="campo"><span>Escribe tu contraseña para confirmar</span><input id="mc-eliminar-contrasena" type="password" autocomplete="current-password" maxlength="128"></label>
+          <p class="error-form" role="alert" hidden></p>
+          <button class="btn btn-peligro" type="submit">Sí, eliminar mi cuenta</button>
+        </form>
+      </details>
+      <button id="btn-salir" class="btn btn-fantasma" type="button">Cerrar sesión</button>
+    </div>
+  </section>
+
   <!-- CV para imprimir / guardar como PDF -->
   <div id="cv-imprimir" class="cv-imprimir" aria-hidden="true"></div>
 
@@ -303,6 +422,7 @@
   <script src="js/vacantes.js"></script>
   <script src="js/motor-local.js"></script>
   <script src="js/cv-latex.js"></script>
+  <script src="js/cuentas.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>
