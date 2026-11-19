@@ -375,7 +375,7 @@
 
         <!-- Panel 2: simulación (la única parte secuencial) -->
         <div id="panel-simulacion" role="tabpanel" aria-labelledby="tab-simulacion" hidden>
-          <p class="pista-tipo">Una entrevista completa para <strong id="sim-vacante-nombre"></strong>: 3 preguntas seguidas, sin pistas, como en la vida real. Al final recibes tu <strong>calificación</strong> y <strong>observaciones de mejora</strong>.</p>
+          <p class="pista-tipo">Una entrevista completa para <strong id="sim-vacante-nombre"></strong>: 3 preguntas y un problema técnico, seguidos y sin pistas, como en la vida real. Al final recibes tu <strong>calificación</strong> y <strong>observaciones de mejora</strong>.</p>
 
           <div id="sim-inicio" class="tarjeta">
             <div class="ent-sobre-ti" data-sobre-ti hidden></div>
@@ -383,7 +383,8 @@
             <ol class="sim-pasos">
               <li><strong>Inicio:</strong> imagina que estás en la videollamada con la persona reclutadora o líder técnico; respira y tómate tu tiempo.</li>
               <li><strong>3 preguntas:</strong> responde cada una como lo harías en voz alta (30 segundos a 1 minuto). No verás consejos hasta el final.</li>
-              <li><strong>Resultado:</strong> calificación de 1 a 10, lo que hiciste bien y observaciones de mejora.</li>
+              <li><strong>1 problema técnico:</strong> un ejercicio tipo LeetCode de nivel junior. Explica la lógica de tu solución (estructura de datos, pasos, casos borde y complejidad); no hace falta escribir código.</li>
+              <li><strong>Resultado:</strong> calificación de 1 a 10, lo que hiciste bien, observaciones de mejora y la solución de referencia del problema.</li>
             </ol>
             <div class="acciones">
               <button id="btn-sim-comenzar" class="btn btn-primario" type="button">▶ Comenzar simulación</button>
@@ -396,6 +397,7 @@
               <span class="sim-avatar" aria-hidden="true">🧑‍💼</span>
               <p id="sim-pregunta" class="pregunta"></p>
             </div>
+            <div id="sim-problema" class="problema-enunciado" hidden></div>
             <div class="acciones">
               <button id="btn-sim-escuchar" class="btn btn-fantasma btn-chico" type="button">🔊 Escuchar pregunta</button>
             </div>
@@ -556,6 +558,7 @@
   <footer class="pie">Demo de hackatón · Las empresas son ficticias, inspiradas en tipos de empresas reales del sector tecnológico; sueldos aproximados.</footer>
 
   <script src="js/vacantes.js"></script>
+  <script src="js/problemas.js"></script>
   <script src="js/motor-local.js"></script>
   <script src="js/cv-latex.js"></script>
   <script src="js/cuentas.js"></script>

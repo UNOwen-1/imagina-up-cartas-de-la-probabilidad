@@ -1011,7 +1011,98 @@
       el("ul", { class: "lista-check" }, PREGUNTAS_PARA_HACER.map(function (t) { return el("li", { text: t }); }))
     ]);
 
-    $("#ent-aprendizaje").replaceChildren(fijan, consejos, sar, vacanteBloque);
+    // Los problemas no dependen de la vacante: se crean una vez y se conservan (con lo que la persona escribió).
+    nodoProblemas = nodoProblemas || bloqueProblemas(bloque);
+    $("#ent-aprendizaje").replaceChildren(fijan, consejos, sar, vacanteBloque, nodoProblemas);
+  }
+  let nodoProblemas = null;
+
+  // ---------- Problemas tipo LeetCode (js/problemas.js) ----------
+  // Se practican explicando la lógica, como en una entrevista: no se ejecuta código.
+  function renderEnunciado(prob) {
+    return [
+      el("p", { class: "problema-texto", text: prob.enunciado }),
+      el("div", { class: "problema-ejemplos" }, prob.ejemplos.map(function (e, i) {
+        return el("div", { class: "problema-ejemplo" },
+          el("strong", { text: "Ejemplo " + (i + 1) }),
+          el("code", { text: "Entrada: " + e.entrada }),
+          el("code", { text: "Salida: " + e.salida + (e.nota ? "   (" + e.nota + ")" : "") }));
+      }))
+    ];
+  }
+
+  function renderSolucion(prob) {
+    const pres = {};
+    const tabs = el("div", { class: "codigo-tabs", role: "tablist", "aria-label": "Lenguaje" });
+    const cuerpo = el("div", { class: "codigo-cuerpo" });
+    [["python", "Python"], ["javascript", "JavaScript"]].forEach(function (l, i) {
+      const boton = el("button", { class: "codigo-tab" + (i === 0 ? " activa" : ""), type: "button", role: "tab", "aria-selected": String(i === 0) }, l[1]);
+      const pre = el("pre", { class: "codigo" }, el("code", { text: prob.codigo[l[0]] }));
+      pre.hidden = i !== 0;
+      pres[l[0]] = pre;
+      boton.addEventListener("click", function () {
+        Array.from(tabs.children).forEach(function (b) { b.classList.remove("activa"); b.setAttribute("aria-selected", "false"); });
+        boton.classList.add("activa"); boton.setAttribute("aria-selected", "true");
+        Object.keys(pres).forEach(function (k) { pres[k].hidden = k !== l[0]; });
+      });
+      tabs.append(boton);
+      cuerpo.append(pre);
+    });
+    return [
+      el("h5", { text: "La lógica, paso a paso" }),
+      el("ol", { class: "problema-idea" }, prob.idea.map(function (t) { return el("li", { text: t }); })),
+      el("p", { class: "problema-complejidad" }, el("strong", { text: "Complejidad: " }), prob.complejidad),
+      el("h5", { text: "Código de referencia" }), tabs, cuerpo
+    ];
+  }
+
+  function bloqueProblemas(bloque) {
+    const problemas = window.PROBLEMAS || [];
+    const items = problemas.map(function (prob, i) {
+      const area = el("textarea", { rows: 4, placeholder: "Explica tu idea: qué estructura de datos usas, cómo recorres los datos, casos borde y complejidad. Puedes agregar pseudocódigo." });
+      const retro = el("div", { class: "retro problema-retro" });
+      retro.hidden = true;
+      const revisar = el("button", { class: "btn btn-secundario btn-chico", type: "button" }, "Revisar mi explicación");
+      revisar.addEventListener("click", conCarga(revisar, "Revisando…", async function () {
+        const texto = area.value.trim();
+        if (texto.split(/\s+/).filter(Boolean).length < 5) { avisar("Escribe tu idea con algunas frases antes de revisarla."); area.focus(); return; }
+        const r = await llamarAgente("entrenador_problema", "entrenador", {
+          problema_id: prob.id, problema: { titulo: prob.titulo, enunciado: prob.enunciado },
+          solucion_referencia: prob.idea.join(" ") + " " + prob.complejidad, respuesta: texto
+        }, function (x) { return x && typeof x.puntaje === "number" && x.lo_bueno; });
+        const puntaje = Math.max(1, Math.min(5, Math.round(r.puntaje)));
+        retro.replaceChildren(
+          el("div", { class: "retro-puntaje" }, el("span", { "aria-hidden": "true", text: estrellas(puntaje) }), el("strong", { text: puntaje + " de 5" })),
+          el("p", { class: "retro-bueno", text: r.lo_bueno }),
+          el("p", { class: "retro-mejorar", text: r.mejorar }));
+        retro.hidden = false;
+        registrar("entrenador", "problema «" + prob.titulo + "»: " + puntaje + "/5.");
+      }));
+      const pistas = el("details", { class: "problema-pistas" }, el("summary", { text: "💡 Ver pistas" }),
+        el("ul", { class: "lista-mejoras" }, prob.pistas.map(function (t) { return el("li", { text: t }); })));
+      const solucion = el("details", { class: "problema-solucion" }, el("summary", { text: "✅ Ver solución" }), renderSolucion(prob));
+      return el("details", { class: "problema" },
+        el("summary", null,
+          el("span", { class: "problema-num", text: String(i + 1) }),
+          el("span", { class: "problema-titulo" }, el("strong", { text: prob.titulo }), el("small", { text: prob.tema + " · Fácil" }))),
+        renderEnunciado(prob), pistas,
+        el("label", { class: "campo" }, el("span", { text: "Tu explicación" }), area),
+        el("div", { class: "acciones" }, revisar), retro, solucion);
+    });
+    return bloque("🧮 Problemas tipo LeetCode (nivel junior)", false, [
+      el("p", { text: "En la prueba técnica importa tanto la solución como explicar cómo llegaste a ella. Para cada problema: léelo, piensa una idea, escríbela con tus palabras y revísala; después compara con la solución." }),
+      el("p", { class: "pista-tipo", text: "Practicas explicando la lógica (no se ejecuta código), así sirve para cualquier lenguaje. La solución incluye código de referencia en Python y JavaScript." }),
+      el("div", { class: "problemas-lista" }, items)
+    ]);
+  }
+
+  // Elige el problema de la simulación al azar, sin repetir el de la simulación anterior.
+  let ultimoProblemaSim = null;
+  function elegirProblemaSimulacion() {
+    const lista = (window.PROBLEMAS || []).filter(function (p) { return p.id !== ultimoProblemaSim; });
+    const prob = lista[Math.floor(Math.random() * lista.length)];
+    ultimoProblemaSim = prob.id;
+    return prob;
   }
 
   // ---------- Simulación: 3 preguntas seguidas, calificación al final ----------
@@ -1031,8 +1122,17 @@
     const r = await llamarAgente("entrenador_preguntas", "entrenador", { perfil: perfil, vacante: e.vacante, modo: "simulacion" }, function (x) {
       return x && Array.isArray(x.preguntas) && x.preguntas.length > 0;
     });
-    estado.simulacion = { preguntas: r.preguntas.slice(0, 3), i: 0, respuestas: [], resultado: null };
-    registrar("entrenador", "simulación lista: " + estado.simulacion.preguntas.length + " preguntas, sin pistas.");
+    const preguntas = r.preguntas.slice(0, 3);
+    const prob = elegirProblemaSimulacion();
+    if (prob) {
+      preguntas.push({
+        pregunta: "Problema técnico: " + prob.titulo,
+        que_busca: "Una solución correcta y eficiente explicada con claridad: estructura de datos, pasos, casos borde y complejidad.",
+        problema_id: prob.id
+      });
+    }
+    estado.simulacion = { preguntas: preguntas, i: 0, respuestas: [], resultado: null };
+    registrar("entrenador", "simulación lista: 3 preguntas y un problema técnico, sin pistas.");
     renderSimPregunta();
     mostrarEstadoSimulacion();
     ubicarSobreTi();
@@ -1041,8 +1141,18 @@
 
   function renderSimPregunta() {
     const sim = estado.simulacion;
-    $("#sim-contador").textContent = "Pregunta " + (sim.i + 1) + " de " + sim.preguntas.length;
-    $("#sim-pregunta").textContent = sim.preguntas[sim.i].pregunta;
+    const q = sim.preguntas[sim.i];
+    const prob = q.problema_id ? (window.PROBLEMAS || []).find(function (x) { return x.id === q.problema_id; }) : null;
+    $("#sim-contador").textContent = "Pregunta " + (sim.i + 1) + " de " + sim.preguntas.length + (prob ? " · Problema técnico" : "");
+    $("#sim-pregunta").textContent = prob
+      ? "Para terminar, un problema técnico: «" + prob.titulo + "». Explícame cómo lo resolverías y por qué."
+      : q.pregunta;
+    const caja = $("#sim-problema");
+    caja.hidden = !prob;
+    if (prob) caja.replaceChildren.apply(caja, renderEnunciado(prob));
+    $("#sim-respuesta").placeholder = prob
+      ? "Explica tu idea: qué estructura de datos usas, los pasos, casos borde y complejidad. Puedes agregar pseudocódigo."
+      : "Responde como en la entrevista real.";
     $("#sim-respuesta").value = "";
     $("#btn-sim-responder").textContent = textoBotonSimulacion();
     $("#sim-respuesta").focus({ preventScroll: true });
@@ -1061,7 +1171,12 @@
       $("#sim-respuesta").focus();
       return;
     }
-    sim.respuestas[sim.i] = { pregunta: sim.preguntas[sim.i].pregunta, respuesta: respuesta };
+    const q = sim.preguntas[sim.i];
+    const prob = q.problema_id ? (window.PROBLEMAS || []).find(function (x) { return x.id === q.problema_id; }) : null;
+    sim.respuestas[sim.i] = prob
+      ? { pregunta: q.pregunta, respuesta: respuesta, tipo: "problema", problema_id: prob.id, enunciado: prob.enunciado,
+          solucion_referencia: prob.idea.join(" ") + " " + prob.complejidad }
+      : { pregunta: q.pregunta, respuesta: respuesta };
     if (sim.i < sim.preguntas.length - 1) {
       sim.i++;
       renderSimPregunta();
@@ -1080,6 +1195,12 @@
     guardarSimulacionEnCuenta();
     mostrarEstadoSimulacion();
     $("#sim-resultado").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function solucionDeReferencia(q) {
+    const prob = q.problema_id ? (window.PROBLEMAS || []).find(function (x) { return x.id === q.problema_id; }) : null;
+    if (!prob) return null;
+    return el("div", { class: "problema-referencia" }, el("h4", { text: "Solución de referencia" }), renderEnunciado(prob), renderSolucion(prob));
   }
 
   function estrellas(puntaje) {
@@ -1103,7 +1224,8 @@
           el("span", { class: "sim-item-puntaje", text: estrellas(ev.puntaje) + " " + Math.round(ev.puntaje) + "/5" })),
         el("p", null, el("strong", { text: "Tu respuesta: " }), (sim.respuestas[i] || {}).respuesta || ""),
         el("p", null, el("strong", { text: "Observación: " }), ev.comentario),
-        q.que_busca ? el("p", { class: "pista-tipo" }, el("strong", { text: "Qué buscaba quien entrevista: " }), q.que_busca) : null);
+        q.que_busca ? el("p", { class: "pista-tipo" }, el("strong", { text: "Qué buscaba quien entrevista: " }), q.que_busca) : null,
+        solucionDeReferencia(q));
     }));
   }
 

@@ -301,22 +301,81 @@
     };
   }
 
+  // ---------- Agente 4: Entrenador (problema técnico) ----------
+  // Evalúa la EXPLICACIÓN de la lógica de una solución (no ejecuta código): idea clave, pasos,
+  // casos borde y complejidad, como lo haría quien entrevista en una prueba técnica.
+  function buscarProblema(datos) {
+    return (window.PROBLEMAS || []).find(function (p) { return p.id === datos.problema_id; }) || null;
+  }
+
+  function entrenador_problema(datos) {
+    const p = buscarProblema(datos);
+    const texto = String(datos.respuesta || "").trim();
+    const n = normalizar(texto);
+    const palabras = texto ? texto.split(/\s+/).length : 0;
+    const contiene = function (grupo) { return grupo.some(function (w) { return n.indexOf(w) !== -1; }); };
+    const grupos = p ? p.conceptos : [];
+    const ideaClave = grupos.length ? contiene(grupos[0]) : false;
+    const pasosClave = grupos.slice(1).filter(contiene).length;
+    const complejidad = /(o\(n|o\(1|o\(log|o \(n|lineal|logaritm|constante|cuadratic|complejidad)/.test(n);
+    const casosBorde = /(vaci|caso borde|casos borde|casos limite|un solo|nulo|null|none|negativ|repetid|si no existe|no hay)/.test(n);
+    const pasos = /(primero|luego|despues|recorr|por cada|mientras|itero|ciclo|si es|si no|al final)/.test(n);
+
+    // 1 punto base + extensión + idea clave + un paso específico de ESTE problema + complejidad.
+    // Así una explicación genérica (solo palabras clave) no llega a 5.
+    let puntaje = 1;
+    if (palabras >= 15) puntaje++;
+    if (ideaClave) puntaje++;
+    if (pasosClave >= 1) puntaje++;
+    if (complejidad) puntaje++;
+    puntaje = Math.max(1, Math.min(5, puntaje));
+
+    const bueno = [];
+    if (ideaClave) bueno.push("identificaste la idea clave de la solución");
+    if (pasos) bueno.push("explicaste los pasos en orden");
+    if (complejidad) bueno.push("mencionaste la complejidad");
+    if (casosBorde) bueno.push("consideraste casos borde");
+
+    const mejorar = [];
+    if (palabras < 15) mejorar.push("explica con más detalle: qué estructura usas, cómo recorres los datos y qué devuelves");
+    if (!ideaClave && p) mejorar.push("piensa en esta pista: «" + p.pistas[p.pistas.length - 1] + "»");
+    if (!complejidad) mejorar.push("di la complejidad en tiempo y espacio (por ejemplo, O(n) y O(1))");
+    if (!casosBorde) mejorar.push("menciona casos borde (entrada vacía, un solo elemento, repetidos)");
+
+    return {
+      puntaje: puntaje,
+      lo_bueno: bueno.length ? "Bien: " + lista(bueno) + "." : "Te animaste a resolverlo: en la entrevista, explicar tu idea aunque tengas dudas vale mucho.",
+      mejorar: mejorar.length ? "Para mejorar: " + lista(mejorar) + "." : "¡Explicación muy completa! En la entrevista, acompáñala probando tu idea con un ejemplo a mano."
+    };
+  }
+
   // ---------- Agente 4: Entrenador (simulación completa) ----------
-  // Evalúa las 3 respuestas juntas: calificación de 1 a 10, fortalezas, mejoras y comentario por pregunta.
+  // Evalúa toda la entrevista (3 preguntas + 1 problema técnico): calificación de 1 a 10,
+  // fortalezas, mejoras y comentario por pregunta.
   function entrenador_simulacion(datos) {
     const v = datos.vacante;
     const respuestas = datos.respuestas || [];
     const evaluaciones = respuestas.map(function (r) {
+      if (r.tipo === "problema") {
+        const e = entrenador_problema({ problema_id: r.problema_id, respuesta: r.respuesta });
+        return { puntaje: e.puntaje, lo_bueno: e.lo_bueno, mejorar: e.mejorar };
+      }
       return entrenador_evaluar({ pregunta: r.pregunta, respuesta: r.respuesta, vacante: v, perfil: datos.perfil });
     });
-    const analisis = respuestas.map(function (r) { return analizarRespuesta(r.respuesta, v); });
+    const conductuales = respuestas.filter(function (r) { return r.tipo !== "problema"; });
+    const analisis = conductuales.map(function (r) { return analizarRespuesta(r.respuesta, v); });
     const total = analisis.length || 1;
     const cuenta = function (k) { return analisis.filter(function (a) { return a[k]; }).length; };
     const promPalabras = Math.round(analisis.reduce(function (s, a) { return s + a.palabras; }, 0) / total);
-    const promPuntaje = evaluaciones.reduce(function (s, e) { return s + e.puntaje; }, 0) / total;
+    const promPuntaje = evaluaciones.reduce(function (s, e) { return s + e.puntaje; }, 0) / (evaluaciones.length || 1);
     const calificacion = Math.max(1, Math.min(10, Math.round(promPuntaje * 2)));
 
+    const iProblema = respuestas.findIndex(function (r) { return r.tipo === "problema"; });
+    const problema = iProblema !== -1 ? buscarProblema(respuestas[iProblema]) : null;
+    const notaProblema = iProblema !== -1 ? evaluaciones[iProblema].puntaje : null;
+
     const fortalezas = [];
+    if (problema && notaProblema >= 4) fortalezas.push("En el problema «" + problema.titulo + "» explicaste una solución clara y eficiente.");
     if (cuenta("tieneEjemplo") >= 2) fortalezas.push("Respaldaste tus respuestas con ejemplos reales en " + cuenta("tieneEjemplo") + " de " + total + " preguntas.");
     if (cuenta("tieneResultado") >= 2) fortalezas.push("Cerraste con resultados concretos: eso hace creíble lo que dices.");
     if (cuenta("mencionaPuesto") >= 1) fortalezas.push("Conectaste tus respuestas con " + v.empresa + " y el puesto.");
@@ -325,18 +384,19 @@
     if (!fortalezas.length) fortalezas.push("Completaste la simulación de principio a fin: practicar así ya te da ventaja sobre quien llega sin prepararse.");
 
     const mejoras = [];
+    if (problema && notaProblema < 4) mejoras.push("Repasa el problema «" + problema.titulo + "» en Aprendizaje y práctica. La idea clave: «" + problema.idea[0] + "»");
     if (promPalabras < 30) mejoras.push("Desarrolla más tus respuestas: promediaste " + promPalabras + " palabras. Apunta a 40–100 (entre 30 segundos y 1 minuto hablando).");
     if (promPalabras > 160) mejoras.push("Sé más concreto: tus respuestas fueron largas. Ve directo a la situación, lo que hiciste y el resultado.");
     if (cuenta("tieneEjemplo") < 2) mejoras.push("Usa el método SAR con tus proyectos: la Situación (qué había que resolver), la Acción técnica que tomaste tú y el Resultado. Empieza con «En mi proyecto de…».");
     if (cuenta("tieneResultado") < 2) mejoras.push("Termina cada historia con un resultado medible o un aprendizaje («reduje el tiempo de respuesta de la API a la mitad»).");
-    if (!cuenta("mencionaPuesto")) mejoras.push("Investiga " + v.empresa + " antes de la entrevista y menciona por qué te interesa ese lugar y el puesto de " + v.puesto + ".");
+    if (!cuenta("mencionaPuesto")) mejoras.push("Investiga " + v.empresa + " antes de la entrevista y menciona por qué te interesa ese lugar y el puesto de " + v.puesto.replace(/\.$/, "") + ".");
     if (!cuenta("actitud")) mejoras.push("Muestra tu disposición a aprender: di cómo te preparas o qué harías para aprender lo que aún no sabes.");
     mejoras.push("Ensaya en voz alta: explica tus proyectos como si los presentaras en una revisión técnica, y practica pensar en voz alta al resolver un problema.");
 
     const veredicto = calificacion >= 9 ? "¡Excelente! Llegarías a la entrevista con mucha seguridad."
       : calificacion >= 7 ? "¡Muy bien! Con un par de ajustes tus respuestas van a destacar."
       : calificacion >= 5 ? "Vas por buen camino. Practica las mejoras y repite la simulación."
-      : "Es un buen inicio. Lee la sección de aprendizaje, usa el método SAR y vuelve a intentarlo.";
+      : "Es un buen inicio. Repasa la sección de aprendizaje y los problemas de práctica, y vuelve a intentarlo.";
 
     return {
       calificacion: calificacion,
@@ -354,6 +414,7 @@
     adaptador: adaptador,
     entrenador_preguntas: entrenador_preguntas,
     entrenador_evaluar: entrenador_evaluar,
-    entrenador_simulacion: entrenador_simulacion
+    entrenador_simulacion: entrenador_simulacion,
+    entrenador_problema: entrenador_problema
   };
 })();
