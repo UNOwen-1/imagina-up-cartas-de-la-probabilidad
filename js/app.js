@@ -968,7 +968,8 @@
       (perfil.habilidades || [])[0];
 
     const bloque = function (titulo, abierto, contenido) {
-      const d = el("details", { class: "tarjeta bloque-aprendizaje" }, el("summary", null, el("h3", { text: titulo })), contenido);
+      const d = el("details", { class: "tarjeta bloque-aprendizaje" }, el("summary", null, el("h3", { text: titulo })),
+        el("div", { class: "bloque-cuerpo" }, contenido));
       d.open = !!abierto;
       return d;
     };
