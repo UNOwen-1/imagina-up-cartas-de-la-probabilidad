@@ -437,6 +437,9 @@ details p { background: var(--superficie-2); padding: .7rem .85rem; border-radiu
 .datos-cv { margin-top: .8rem; }
 .datos-cv summary { cursor: pointer; font-weight: 600; color: var(--primario-texto); }
 .datos-cv[open] summary { margin-bottom: .5rem; }
+/* Dos columnas iguales (no la de nombre/edad); «Periodo» pasa al siguiente renglón a media anchura. */
+.datos-cv .fila-campos { grid-template-columns: 1fr 1fr; column-gap: 1rem; row-gap: 0; }
+@media (max-width: 520px) { .datos-cv .fila-campos { grid-template-columns: 1fr; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
