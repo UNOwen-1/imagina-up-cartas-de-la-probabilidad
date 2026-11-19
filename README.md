@@ -82,7 +82,7 @@ Hackaton/
 ├── css/estilos.css     # Estilos: paleta y tipografías para aprendizaje
 ├── js/
 │   ├── app.js          # Lógica de la interfaz, voz, cuentas y conexión con los agentes
-│   ├── cuentas.js      # Cliente de la API de cuentas (sesión, datos y CV guardados)
+│   ├── cuentas.js      # Cuentas: en el navegador (localStorage) o en el servidor si está corriendo
 │   ├── cv-latex.js     # CV con la plantilla LaTeX (.tex, Overleaf y versión imprimible)
 │   ├── motor-local.js  # Los 4 agentes simulados (modo demo, sin internet)
 │   └── vacantes.js     # 30 vacantes de ejemplo (empresas ficticias)
@@ -98,13 +98,21 @@ Hackaton/
 
 **Datos:** las vacantes viven en `js/vacantes.js`. Sin cuenta (modo invitado), el perfil solo vive en la memoria del navegador y no se guarda nada.
 
-**Cuentas:** al abrir Despega con el servidor, aparece la pantalla de acceso para **iniciar sesión** o **crear cuenta** con nombre completo y contraseña (también se puede **continuar sin cuenta**).
-- Con sesión iniciada se guardan automáticamente los datos del paso 1 (edad, historia, contacto, estudios), los proyectos y logros del paso 3, y **cada CV adaptado** (`.tex` y PDF compilado con `pdflatex` si está instalado).
-- Al volver a entrar, Despega se llena solo con esos datos.
-- En **Mi cuenta** (botón 👤 del encabezado) se ven, descargan o abren en Overleaf los CV guardados; se editan los datos, el nombre y la contraseña; y se puede cerrar sesión o eliminar la cuenta con todos sus CV.
-- Todo se guarda en `datos/despega.db` (SQLite) en la computadora que corre el servidor. Las contraseñas se guardan con hash PBKDF2 y sal, nunca en texto plano. La sesión usa una cookie `HttpOnly` que dura 30 días. Para usar otra ubicación: variable `DESPEGA_BD`.
+**Cuentas:** al abrir Despega aparece la pantalla de acceso para **iniciar sesión** o **crear cuenta** con nombre completo y contraseña (también se puede **continuar sin cuenta**). Funciona **con solo abrir la página**: no hace falta el servidor.
+- Con sesión iniciada se guardan automáticamente los datos del paso 1 (edad, historia, contacto, estudios), los proyectos y logros del paso 3, y **cada CV adaptado**.
+- Al volver a entrar, Despega se llena solo con esos datos. La sesión se recuerda 30 días.
+- En **Mi cuenta** (botón 👤 del encabezado) se ven e imprimen como PDF, se descargan en `.tex` o se abren en Overleaf los CV guardados; se editan los datos, el nombre y la contraseña; y se puede cerrar sesión o eliminar la cuenta con todos sus CV.
 - El nombre para iniciar sesión no distingue mayúsculas ni acentos («José Pérez» = «jose perez»), así que dos cuentas no pueden tener el mismo nombre.
-- Abriendo `index.html` directamente (sin servidor) no hay cuentas: Despega funciona en modo invitado.
+- Las contraseñas se guardan como hash PBKDF2-SHA256 con sal, nunca en texto plano.
+
+**¿Dónde se guardan las cuentas?** `js/cuentas.js` elige solo:
+
+| Cómo se abre Despega | Dónde se guardan | Notas |
+|---|---|---|
+| `index.html` con doble clic, o publicado como sitio estático (p. ej. GitHub Pages) | En **este navegador** (`localStorage`) | Cada navegador/equipo tiene sus propias cuentas. Borrar los datos del sitio en el navegador borra las cuentas. El hash se calcula con Web Crypto, que requiere `https://` o archivo local. |
+| Con el servidor (`iniciar.bat` / `python servidor.py`) | En **`datos/despega.db`** (SQLite) en el equipo del servidor | Sesión con cookie `HttpOnly`. Si hay `pdflatex`, cada CV se guarda también como PDF compilado. Otra ubicación: variable `DESPEGA_BD`. La carpeta `datos/` no se sube a git. |
+
+> Las cuentas en el navegador sirven para que cada persona retome su avance en su propio equipo; no sincronizan entre dispositivos. Quien tenga acceso al navegador y a sus herramientas de desarrollo puede leer los datos guardados (no las contraseñas).
 
 **Habilidades personalizadas:** al agregar una habilidad, la persona elige si es **🛠️ Técnica** o **💬 Blanda**. Las que no estaban en el catálogo se guardan en el navegador (`localStorage`, clave `despega.habilidadesPersonalizadas`) y aparecen en las sugerencias la próxima vez, con su tipo. Para borrarlas, limpien los datos del sitio en el navegador.
 

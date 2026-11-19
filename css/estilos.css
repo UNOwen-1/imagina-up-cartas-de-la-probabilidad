@@ -462,6 +462,7 @@ details p { background: var(--superficie-2); padding: .7rem .85rem; border-radiu
   margin: 0 0 .8rem; padding: .55rem .8rem; border-radius: 10px; font-size: .92rem;
   background: var(--alerta-suave); color: var(--alerta);
 }
+.nota-cuentas { margin: .8rem 0 0; text-align: center; }
 .acceso-invitado { margin-top: 1.2rem; padding-top: 1rem; border-top: 1px dashed var(--borde); text-align: center; }
 .acceso-invitado .pista-tipo { margin: .4rem 0 0; }
 
