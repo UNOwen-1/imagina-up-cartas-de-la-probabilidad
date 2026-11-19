@@ -385,19 +385,38 @@ details p { background: var(--superficie-2); padding: .7rem .85rem; border-radiu
 /* ---------- CV imprimible ---------- */
 .cv-imprimir { display: none; }
 
+/* Reproduce la plantilla LaTeX: serif tipo Computer Modern, versalitas y reglas bajo cada sección. */
 @media print {
-  @page { margin: 18mm; }
-  body { background: #fff; color: #111; font-size: 11pt; }
+  @page { size: letter; margin: 0.5in; }
+  body { background: #fff; color: #000; }
   body > *:not(.cv-imprimir) { display: none !important; }
-  .cv-imprimir { display: block !important; }
-  .cv-imprimir h1 { font-family: var(--fuente-titulos); font-size: 22pt; margin: 0; color: #1E40AF; }
-  .cv-imprimir .sub { color: #475569; margin: 0 0 10pt; }
-  .cv-imprimir h2 {
-    font-family: var(--fuente-titulos); font-size: 10pt; text-transform: uppercase; letter-spacing: .08em;
-    color: #1E40AF; border-bottom: 1px solid #CBD5E1; padding-bottom: 2pt; margin: 14pt 0 6pt;
+  .cv-imprimir {
+    display: block !important;
+    font-family: "Latin Modern Roman", "CMU Serif", "Computer Modern", Georgia, "Times New Roman", serif;
+    font-size: 10.5pt; line-height: 1.25; color: #000;
   }
-  .cv-imprimir ul { margin: 0; padding-left: 14pt; }
+  .cv-imprimir a { color: inherit; text-decoration: underline; }
+  .cv-imprimir h1, .cv-imprimir h2 { font-family: inherit; color: #000; letter-spacing: normal; text-transform: none; }
+  .lx-nombre { font-size: 25pt; font-weight: 700; font-variant: small-caps; text-align: center; margin: 0 0 2pt; }
+  .lx-contacto { text-align: center; font-size: 9.5pt; margin: 0 0 6pt; }
+  .lx-sep { margin: 0 .9em; }
+  .lx-seccion {
+    font-size: 13pt; font-weight: 400; font-variant: small-caps; margin: 8pt 0 4pt;
+    border-bottom: .6pt solid #000; padding-bottom: 1pt; break-after: avoid;
+  }
+  .lx-bloque { margin: 0 0 4pt .15in; break-inside: avoid; }
+  .lx-fila { display: flex; justify-content: space-between; gap: 1em; }
+  .lx-sub { font-size: 9.5pt; }
+  .lx-texto { margin: 0 0 0 .15in; font-size: 9.5pt; }
+  .lx-texto p { margin: 0 0 1pt; }
+  .cv-imprimir ul { margin: 2pt 0 0; padding-left: .3in; font-size: 9.5pt; }
+  .cv-imprimir li { margin-bottom: 1pt; }
 }
+
+/* Datos opcionales del CV en el paso 1 */
+.datos-cv { margin-top: .8rem; }
+.datos-cv summary { cursor: pointer; font-weight: 600; color: var(--primario-texto); }
+.datos-cv[open] summary { margin-bottom: .5rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
