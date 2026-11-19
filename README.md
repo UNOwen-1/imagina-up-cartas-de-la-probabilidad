@@ -120,7 +120,7 @@ Hackaton/
 
 **Cuentas:** al abrir Despega aparece la pantalla de acceso para **iniciar sesión** o **crear cuenta** con nombre completo y contraseña (también se puede **continuar sin cuenta**). Funciona **con solo abrir la página**: no hace falta el servidor.
 - Con sesión iniciada se guardan automáticamente los datos del paso 1 (edad, historia, contacto, estudios), los proyectos y logros del paso 3, y **cada CV adaptado**.
-- Al volver a entrar, Despega se llena solo con esos datos. La sesión se recuerda 30 días.
+- Al volver a entrar, Despega se llena solo con esos datos. La sesión **se cierra automáticamente al salir de la página** (cerrar la pestaña, recargar o ir a otro sitio): al volver hay que iniciar sesión de nuevo.
 - Cada **simulación de entrevista** terminada se guarda en el **historial de calificaciones**: calificación, veredicto, fortalezas, observaciones de mejora y cada respuesta.
 - En **Mi cuenta** está el historial (simulaciones, promedio, mejor y última calificación con su cambio, una gráfica de las últimas 12 y el detalle de cada una, que se puede eliminar).
 - En **Mi cuenta** (botón 👤 del encabezado) se ven e imprimen como PDF, se descargan en `.tex` o se abren en Overleaf los CV guardados; se editan los datos, el nombre y la contraseña; y se puede cerrar sesión o eliminar la cuenta con todos sus CV.

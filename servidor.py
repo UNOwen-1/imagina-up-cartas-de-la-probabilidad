@@ -403,7 +403,9 @@ class Manejador(SimpleHTTPRequestHandler):
     def cookie_sesion(token: str | None) -> str:
         if token is None:
             return f"{COOKIE_SESION}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
-        return f"{COOKIE_SESION}={token}; Path=/; HttpOnly; SameSite=Strict; Max-Age={cuentas.DURACION_SESION}"
+        # Cookie de sesión (sin Max-Age): el navegador la borra al cerrarse, y la
+        # página llama a /api/cuenta/logout al salir.
+        return f"{COOKIE_SESION}={token}; Path=/; HttpOnly; SameSite=Strict"
 
     def leer_json(self) -> dict:
         if "application/json" not in self.headers.get("Content-Type", ""):
