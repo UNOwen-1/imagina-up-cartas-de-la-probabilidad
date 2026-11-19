@@ -23,6 +23,10 @@ Proyecto de hackatón · MVP funcional en una página web local.
 | 3 | ✍️ **Adaptador** | Reescribe tu CV para la vacante elegida | Comparación **antes / después** y CV en PDF |
 | 4 | 🎤 **Entrenador** | Te hace 3 preguntas de entrevista y evalúa tus respuestas | Entrevista **por voz** con calificación y respuesta de ejemplo |
 
+**Dos flujos** (pestañas arriba de la barra de pasos):
+- **📄 Crear mi CV** (agentes 1–3): Tu historia → Tus habilidades → Proyectos y logros → Vacantes → **Tu CV**. Termina con el CV listo.
+- **🎤 Entrenar entrevista** (agente 4): Prepara tu práctica → Entrevista. Se puede practicar para la vacante del CV actual, para un CV guardado en tu cuenta o para cualquier vacante del catálogo (contando brevemente tu historia), **sin necesidad de hacer el CV**.
+
 👤 **Humano en el circuito:** la IA propone y explica; la persona **aprueba, quita o agrega** en cada paso. La IA no inventa habilidades.
 
 ---
@@ -67,8 +71,8 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 2. **Paso 2:** mostrar que cada habilidad tiene **evidencia**. Quitar una para demostrar que *tú decides*. → **"Aprobar y continuar"**.
 3. **Paso 3 (opcional):** **Proyectos y logros**, con una guía de qué escribir y cómo. Agregar uno o dar clic en **"Omitir, no agregar nada"** (el CV queda sin esas secciones).
 4. **Paso 4:** mostrar el **% de compatibilidad**, "por qué encajas" y "para crecer". Elegir la primera vacante.
-5. **Paso 5:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**.
-6. **Paso 6:** **🔊 Escuchar pregunta** → **🎤 Responder con mi voz** → **Evaluar**. Mostrar las estrellas y la respuesta de ejemplo.
+5. **Paso 5:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**. Aquí termina el flujo del CV.
+6. **Entrenar entrevista:** clic en **"🎤 Entrenar la entrevista para esta vacante"** (o en la pestaña **🎤 Entrenar entrevista**) → **Empezar entrevista** → **🔊 Escuchar pregunta** → **🎤 Responder con mi voz** → **Evaluar**. Mostrar las estrellas y la respuesta de ejemplo.
 
 > Cierre: *"En menos de 2 minutos, Mariana pasó de 'no tengo experiencia' a tener un CV, 3 vacantes y una entrevista practicada."*
 
@@ -78,7 +82,7 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 
 ```
 Hackaton/
-├── index.html          # La página (6 pasos + panel de agentes)
+├── index.html          # La página (flujo de CV en 5 pasos + flujo de entrevista + panel de agentes)
 ├── css/estilos.css     # Estilos: paleta y tipografías para aprendizaje
 ├── js/
 │   ├── app.js          # Lógica de la interfaz, voz, cuentas y conexión con los agentes
