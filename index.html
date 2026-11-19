@@ -79,11 +79,6 @@
       <li data-paso="4"><span class="num">4</span><span class="txt">Vacantes</span></li>
       <li data-paso="5"><span class="num">5</span><span class="txt">Tu CV</span></li>
     </ol>
-    <ol id="lista-pasos-ent" hidden>
-      <li data-paso="1" class="activo"><span class="num">1</span><span class="txt">Elige la vacante</span></li>
-      <li data-paso="2"><span class="num">2</span><span class="txt">Aprendizaje y práctica</span></li>
-      <li data-paso="3"><span class="num">3</span><span class="txt">Simulación</span></li>
-    </ol>
   </nav>
 
   <div class="distribucion">
@@ -300,23 +295,154 @@
         </div>
       </section>
 
-      <!-- ENTRENAMIENTO 1: Preparar la práctica -->
+      <!-- ENTRENAMIENTO: una sola pantalla. Se elige la vacante; el aprendizaje se consulta libremente
+           y la simulación es la única parte secuencial. -->
       <section id="ent-1" class="paso" aria-labelledby="t-ent-1">
-        <h2 id="t-ent-1">Entrena para tu entrevista</h2>
-        <p class="ayuda">El <strong>Entrenador</strong> te hará 3 preguntas reales para la vacante que elijas y te dirá qué mejorar. <strong>No necesitas haber hecho tu CV.</strong></p>
+        <h2 id="t-ent-1">Prepárate para tu entrevista</h2>
+        <p class="ayuda">Elige la vacante y consulta libremente qué evalúan las empresas, consejos y una práctica guiada. Cuando te sientas listo o lista, haz la <strong>simulación</strong>: una entrevista completa con calificación. <strong>No necesitas haber hecho tu CV.</strong></p>
 
-        <div class="tarjeta">
-          <h3>1. ¿Para qué vacante quieres practicar?</h3>
-          <div id="ent-opciones" class="opciones-vacante" role="radiogroup" aria-label="Vacante para practicar"></div>
+        <div class="tarjeta" id="ent-vacante-tarjeta">
+          <h3>¿Para qué vacante te preparas?</h3>
+          <div id="ent-opciones" class="opciones-vacante" role="radiogroup" aria-label="Vacante para prepararte"></div>
           <label class="campo" id="campo-ent-catalogo" hidden>
             <span>Elige la vacante</span>
             <select id="ent-catalogo"></select>
           </label>
         </div>
 
-        <div id="ent-sobre-ti" class="tarjeta" hidden>
-          <h3>2. Cuéntanos de ti</h3>
-          <p class="pista-tipo">El Entrenador usa tus experiencias reales para hacerte preguntas y darte respuestas de ejemplo. Puedes ser breve.</p>
+        <div class="pestanas pestanas-ent" role="tablist" aria-label="Secciones de preparación">
+          <button id="tab-aprendizaje" class="pestana activa" type="button" role="tab" aria-selected="true" aria-controls="panel-aprendizaje">📚 Aprendizaje y práctica</button>
+          <button id="tab-simulacion" class="pestana" type="button" role="tab" aria-selected="false" aria-controls="panel-simulacion">🎯 Simulación</button>
+        </div>
+
+        <!-- Panel 1: información de consulta libre + práctica guiada opcional -->
+        <div id="panel-aprendizaje" role="tabpanel" aria-labelledby="tab-aprendizaje">
+          <p class="pista-tipo">Información para <strong id="ent-vacante-nombre"></strong>. Abre los apartados que quieras, en el orden que quieras.</p>
+          <div id="ent-aprendizaje" class="aprendizaje"></div>
+
+          <h3 class="titulo-practica">🎯 Práctica guiada (opcional)</h3>
+          <p class="pista-tipo">3 preguntas con retroalimentación después de cada respuesta. Puedes practicar cuantas veces quieras.</p>
+
+          <div id="ent-practica-inicio" class="tarjeta">
+            <div class="ent-sobre-ti" data-sobre-ti hidden></div>
+            <div class="acciones">
+              <button id="btn-practica-comenzar" class="btn btn-primario" type="button">▶ Comenzar práctica guiada</button>
+            </div>
+          </div>
+
+          <div id="entrevista" class="tarjeta" hidden>
+            <div class="progreso-pregunta"><span id="ent-contador">Pregunta 1 de 3</span></div>
+            <p id="ent-pregunta" class="pregunta"></p>
+            <p id="ent-busca" class="que-busca"></p>
+            <div class="acciones">
+              <button id="btn-escuchar" class="btn btn-fantasma btn-chico" type="button">🔊 Escuchar pregunta</button>
+            </div>
+            <label class="campo">
+              <span>Tu respuesta</span>
+              <textarea id="in-respuesta" rows="5" placeholder="Tip: cuenta un proyecto real, qué hiciste tú y qué resultado tuvo."></textarea>
+            </label>
+            <div class="acciones">
+              <button id="btn-responder-voz" class="btn btn-secundario" type="button">🎤 Responder con mi voz</button>
+              <button id="btn-evaluar" class="btn btn-primario" type="button">Evaluar mi respuesta</button>
+            </div>
+            <p id="estado-voz-respuesta" class="estado-voz" hidden></p>
+
+            <div id="ent-retro" class="retro" hidden>
+              <div class="retro-puntaje"><span id="ent-estrellas" aria-hidden="true"></span><strong id="ent-puntaje"></strong></div>
+              <p id="ent-bueno" class="retro-bueno"></p>
+              <p id="ent-mejorar" class="retro-mejorar"></p>
+              <details>
+                <summary>Ver una respuesta de ejemplo</summary>
+                <p id="ent-ejemplo"></p>
+              </details>
+              <div class="acciones">
+                <button id="btn-siguiente" class="btn btn-primario" type="button">Siguiente pregunta →</button>
+              </div>
+            </div>
+          </div>
+
+          <div id="ent-final" class="tarjeta tarjeta-celebracion" hidden>
+            <p class="celebracion-emoji" aria-hidden="true">🎉</p>
+            <h3>¡Práctica terminada!</h3>
+            <p id="ent-resumen-final"></p>
+            <p class="pista-tipo">Cuando quieras, ponte a prueba en la simulación: una entrevista completa, sin ayudas, como si fuera la real.</p>
+            <div class="acciones">
+              <button class="btn btn-primario ir-simulacion" type="button">Ir a la simulación →</button>
+              <button id="btn-otra-vez" class="btn btn-secundario" type="button">Practicar otra vez</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel 2: simulación (la única parte secuencial) -->
+        <div id="panel-simulacion" role="tabpanel" aria-labelledby="tab-simulacion" hidden>
+          <p class="pista-tipo">Una entrevista completa para <strong id="sim-vacante-nombre"></strong>: 3 preguntas seguidas, sin pistas, como en la vida real. Al final recibes tu <strong>calificación</strong> y <strong>observaciones de mejora</strong>.</p>
+
+          <div id="sim-inicio" class="tarjeta">
+            <div class="ent-sobre-ti" data-sobre-ti hidden></div>
+            <h3>Antes de empezar</h3>
+            <ol class="sim-pasos">
+              <li><strong>Inicio:</strong> imagina que estás en la videollamada con la persona reclutadora o líder técnico; respira y tómate tu tiempo.</li>
+              <li><strong>3 preguntas:</strong> responde cada una como lo harías en voz alta (30 segundos a 1 minuto). No verás consejos hasta el final.</li>
+              <li><strong>Resultado:</strong> calificación de 1 a 10, lo que hiciste bien y observaciones de mejora.</li>
+            </ol>
+            <div class="acciones">
+              <button id="btn-sim-comenzar" class="btn btn-primario" type="button">▶ Comenzar simulación</button>
+            </div>
+          </div>
+
+          <div id="sim-pregunta-card" class="tarjeta sim-entrevista" hidden>
+            <div class="progreso-pregunta"><span id="sim-contador">Pregunta 1 de 3</span></div>
+            <div class="sim-burbuja">
+              <span class="sim-avatar" aria-hidden="true">🧑‍💼</span>
+              <p id="sim-pregunta" class="pregunta"></p>
+            </div>
+            <div class="acciones">
+              <button id="btn-sim-escuchar" class="btn btn-fantasma btn-chico" type="button">🔊 Escuchar pregunta</button>
+            </div>
+            <label class="campo">
+              <span>Tu respuesta</span>
+              <textarea id="sim-respuesta" rows="6" placeholder="Responde como en la entrevista real."></textarea>
+            </label>
+            <div class="acciones">
+              <button id="btn-sim-voz" class="btn btn-secundario" type="button">🎤 Responder con mi voz</button>
+              <button id="btn-sim-responder" class="btn btn-primario" type="button">Responder y continuar →</button>
+            </div>
+            <p id="estado-sim-voz" class="estado-voz" hidden></p>
+          </div>
+
+          <div id="sim-resultado" class="tarjeta sim-resultado" hidden>
+            <div class="sim-calificacion">
+              <div class="sim-nota"><strong id="sim-nota"></strong><span>de 10</span></div>
+              <div>
+                <p id="sim-estrellas" class="sim-estrellas" aria-hidden="true"></p>
+                <p id="sim-veredicto" class="sim-veredicto"></p>
+              </div>
+            </div>
+            <div class="sim-observaciones">
+              <div>
+                <h3>💪 Lo que hiciste bien</h3>
+                <ul id="sim-fortalezas" class="lista-check"></ul>
+              </div>
+              <div>
+                <h3>🛠️ Observaciones de mejora</h3>
+                <ul id="sim-mejoras" class="lista-mejoras"></ul>
+              </div>
+            </div>
+            <h3>Tus respuestas, una por una</h3>
+            <div id="sim-detalle" class="sim-detalle"></div>
+            <p id="sim-guardado" class="pista-tipo sim-guardado"></p>
+            <div class="acciones">
+              <button id="btn-sim-repetir" class="btn btn-primario" type="button">↺ Nueva simulación (otras preguntas)</button>
+              <button class="btn btn-secundario ir-aprendizaje" type="button">📚 Repasar aprendizaje y práctica</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- "Cuéntanos de ti": solo se necesita para practicar o simular con una vacante del catálogo.
+             Se mueve dentro del panel activo (práctica o simulación). -->
+        <div id="ent-sobre-ti" class="sobre-ti" hidden>
+          <h3>Antes, cuéntanos de ti</h3>
+          <p class="pista-tipo">Para hacerte preguntas y darte respuestas de ejemplo con tus experiencias reales. La información de arriba no lo necesita. Puedes ser breve.</p>
           <label class="campo">
             <span>Tu nombre</span>
             <input id="ent-nombre" type="text" autocomplete="name" placeholder="Ej. Diego Hernández">
@@ -330,137 +456,6 @@
             <button id="btn-ent-ejemplo" class="btn btn-fantasma btn-chico" type="button">✨ Usar ejemplo (Diego)</button>
           </div>
           <p id="estado-ent-dictado" class="estado-voz" hidden></p>
-        </div>
-
-        <div class="acciones acciones-final">
-          <button id="btn-empezar-entrevista" class="btn btn-primario" type="button">Empezar a entrenar →</button>
-        </div>
-      </section>
-
-      <!-- ENTRENAMIENTO 2: Aprendizaje y práctica -->
-      <section id="ent-2" class="paso" aria-labelledby="t-ent-2">
-        <h2 id="t-ent-2">Aprendizaje y práctica</h2>
-        <p class="ayuda">Primero aprende qué buscan las empresas en una entrevista para <strong id="ent-vacante-nombre"></strong>; después practica con 3 preguntas y recibe consejos en cada respuesta.</p>
-
-        <div id="ent-aprendizaje" class="aprendizaje"></div>
-
-        <h3 class="titulo-practica">🎯 Práctica guiada</h3>
-        <p class="pista-tipo">Responde con tu voz o escribiendo. Después de cada respuesta verás qué hiciste bien y qué mejorar.</p>
-        <div id="entrevista" class="tarjeta">
-          <div class="progreso-pregunta"><span id="ent-contador">Pregunta 1 de 3</span></div>
-          <p id="ent-pregunta" class="pregunta"></p>
-          <p id="ent-busca" class="que-busca"></p>
-          <div class="acciones">
-            <button id="btn-escuchar" class="btn btn-fantasma btn-chico" type="button">🔊 Escuchar pregunta</button>
-          </div>
-          <label class="campo">
-            <span>Tu respuesta</span>
-            <textarea id="in-respuesta" rows="5" placeholder="Tip: cuenta una situación real, qué hiciste y qué lograste."></textarea>
-          </label>
-          <div class="acciones">
-            <button id="btn-responder-voz" class="btn btn-secundario" type="button">🎤 Responder con mi voz</button>
-            <button id="btn-evaluar" class="btn btn-primario" type="button">Evaluar mi respuesta</button>
-          </div>
-          <p id="estado-voz-respuesta" class="estado-voz" hidden></p>
-
-          <div id="ent-retro" class="retro" hidden>
-            <div class="retro-puntaje"><span id="ent-estrellas" aria-hidden="true"></span><strong id="ent-puntaje"></strong></div>
-            <p id="ent-bueno" class="retro-bueno"></p>
-            <p id="ent-mejorar" class="retro-mejorar"></p>
-            <details>
-              <summary>Ver una respuesta de ejemplo</summary>
-              <p id="ent-ejemplo"></p>
-            </details>
-            <div class="acciones">
-              <button id="btn-siguiente" class="btn btn-primario" type="button">Siguiente pregunta →</button>
-            </div>
-          </div>
-        </div>
-
-        <div id="ent-final" class="tarjeta tarjeta-celebracion" hidden>
-          <p class="celebracion-emoji" aria-hidden="true">🎉</p>
-          <h3>¡Práctica terminada!</h3>
-          <p id="ent-resumen-final"></p>
-          <p class="pista-tipo">¿Lista la práctica? Ahora ponte a prueba en una entrevista simulada, sin ayudas, como si fuera la real.</p>
-          <div class="acciones">
-            <button class="btn btn-primario ir-simulacion" type="button">Ir a la simulación →</button>
-            <button id="btn-otra-vez" class="btn btn-secundario" type="button">Practicar otra vez</button>
-            <button id="btn-otra-vacante" class="btn btn-fantasma" type="button">Practicar para otra vacante</button>
-          </div>
-        </div>
-
-        <div class="acciones acciones-final">
-          <button id="btn-ent-volver" class="btn btn-fantasma" type="button">← Cambiar vacante</button>
-          <button class="btn btn-primario ir-simulacion" type="button">Ir a la simulación →</button>
-        </div>
-      </section>
-
-      <!-- ENTRENAMIENTO 3: Simulación -->
-      <section id="ent-3" class="paso" aria-labelledby="t-ent-3">
-        <h2 id="t-ent-3">Simulación de entrevista</h2>
-        <p class="ayuda">Una entrevista completa para <strong id="sim-vacante-nombre"></strong>: 3 preguntas seguidas, sin pistas, como en la vida real. Al final recibes tu <strong>calificación</strong> y <strong>observaciones de mejora</strong>.</p>
-
-        <div id="sim-inicio" class="tarjeta">
-          <h3>Antes de empezar</h3>
-          <ul class="lista-check">
-            <li>Imagina que estás en la videollamada con la persona reclutadora o líder técnico: respira y tómate tu tiempo.</li>
-            <li>Responde cada pregunta como lo harías en voz alta (30 segundos a 1 minuto).</li>
-            <li>No verás consejos hasta el final: así sabrás cómo te iría de verdad.</li>
-          </ul>
-          <div class="acciones">
-            <button id="btn-sim-comenzar" class="btn btn-primario" type="button">▶ Comenzar simulación</button>
-          </div>
-        </div>
-
-        <div id="sim-pregunta-card" class="tarjeta sim-entrevista" hidden>
-          <div class="progreso-pregunta"><span id="sim-contador">Pregunta 1 de 3</span></div>
-          <div class="sim-burbuja">
-            <span class="sim-avatar" aria-hidden="true">🧑‍💼</span>
-            <p id="sim-pregunta" class="pregunta"></p>
-          </div>
-          <div class="acciones">
-            <button id="btn-sim-escuchar" class="btn btn-fantasma btn-chico" type="button">🔊 Escuchar pregunta</button>
-          </div>
-          <label class="campo">
-            <span>Tu respuesta</span>
-            <textarea id="sim-respuesta" rows="6" placeholder="Responde como en la entrevista real."></textarea>
-          </label>
-          <div class="acciones">
-            <button id="btn-sim-voz" class="btn btn-secundario" type="button">🎤 Responder con mi voz</button>
-            <button id="btn-sim-responder" class="btn btn-primario" type="button">Responder y continuar →</button>
-          </div>
-          <p id="estado-sim-voz" class="estado-voz" hidden></p>
-        </div>
-
-        <div id="sim-resultado" class="tarjeta sim-resultado" hidden>
-          <div class="sim-calificacion">
-            <div class="sim-nota"><strong id="sim-nota"></strong><span>de 10</span></div>
-            <div>
-              <p id="sim-estrellas" class="sim-estrellas" aria-hidden="true"></p>
-              <p id="sim-veredicto" class="sim-veredicto"></p>
-            </div>
-          </div>
-          <div class="sim-observaciones">
-            <div>
-              <h3>💪 Lo que hiciste bien</h3>
-              <ul id="sim-fortalezas" class="lista-check"></ul>
-            </div>
-            <div>
-              <h3>🛠️ Observaciones de mejora</h3>
-              <ul id="sim-mejoras" class="lista-mejoras"></ul>
-            </div>
-          </div>
-          <h3>Tus respuestas, una por una</h3>
-          <div id="sim-detalle" class="sim-detalle"></div>
-          <p id="sim-guardado" class="pista-tipo sim-guardado"></p>
-          <div class="acciones">
-            <button id="btn-sim-repetir" class="btn btn-primario" type="button">↺ Nueva simulación (otras preguntas)</button>
-            <button class="btn btn-secundario ir-aprendizaje" type="button">📚 Volver a aprendizaje y práctica</button>
-          </div>
-        </div>
-
-        <div class="acciones acciones-final">
-          <button class="btn btn-fantasma ir-aprendizaje" type="button">← Aprendizaje y práctica</button>
         </div>
       </section>
     </main>
