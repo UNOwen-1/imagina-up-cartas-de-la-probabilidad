@@ -74,9 +74,12 @@
   function leerBD() {
     try {
       const bd = JSON.parse(localStorage.getItem(CLAVE_BD) || "null");
-      if (bd && bd.usuarios && bd.cvs) return bd;
+      if (bd && bd.usuarios && bd.cvs) {
+        bd.entrevistas = bd.entrevistas || {}; // cuentas creadas antes del historial
+        return bd;
+      }
     } catch (e) { /* datos dañados o almacenamiento bloqueado */ }
-    return { siguienteId: 1, usuarios: {}, cvs: {} };
+    return { siguienteId: 1, usuarios: {}, cvs: {}, entrevistas: {} };
   }
 
   function escribirBD(bd) {
@@ -220,6 +223,7 @@
       const bd = leerBD();
       const u = usuarioActual(bd);
       delete bd.cvs[u.id];
+      delete bd.entrevistas[u.id];
       delete bd.usuarios[claveActual];
       escribirBD(bd);
       claveActual = null;
@@ -267,7 +271,43 @@
 
     leerTex: async function (id) { return (await Navegador.obtenerCv(id)).tex; },
 
-    urlPdf: function () { return null; }
+    urlPdf: function () { return null; },
+
+    // --- Historial de calificaciones (simulaciones) ---
+    listarEntrevistas: async function () {
+      const bd = leerBD();
+      const u = usuarioActual(bd);
+      return (bd.entrevistas[u.id] || []).slice().sort(function (a, b) { return b.creado - a.creado; });
+    },
+
+    guardarEntrevista: async function (e) {
+      const calificacion = Math.round(Number(e && e.calificacion));
+      if (!(calificacion >= 1 && calificacion <= 10)) throw error("La calificación debe estar entre 1 y 10.");
+      const bd = leerBD();
+      const u = usuarioActual(bd);
+      const lista = bd.entrevistas[u.id] || (bd.entrevistas[u.id] = []);
+      const nueva = {
+        id: bd.siguienteId++, creado: Date.now() / 1000,
+        puesto: String(e.puesto || "").slice(0, 120), empresa: String(e.empresa || "").slice(0, 120),
+        calificacion: calificacion, veredicto: e.veredicto || "", fortalezas: e.fortalezas || [],
+        mejoras: e.mejoras || [], preguntas: e.preguntas || []
+      };
+      lista.push(nueva);
+      lista.sort(function (a, b) { return b.creado - a.creado; });
+      lista.splice(100); // conserva las 100 más recientes
+      escribirBD(bd);
+      return nueva;
+    },
+
+    eliminarEntrevista: async function (id) {
+      const bd = leerBD();
+      const u = usuarioActual(bd);
+      const antes = (bd.entrevistas[u.id] || []).length;
+      bd.entrevistas[u.id] = (bd.entrevistas[u.id] || []).filter(function (x) { return String(x.id) !== String(id); });
+      if (bd.entrevistas[u.id].length === antes) throw error("No se encontró esa entrevista.", 404);
+      escribirBD(bd);
+      return { ok: true };
+    }
   };
 
   // ---------------------------------------------------------------------------
@@ -313,7 +353,10 @@
       if (!r.ok) throw error("No se pudo leer el CV.", r.status);
       return r.text();
     },
-    urlPdf: function (id) { return ruta(id, "pdf"); }
+    urlPdf: function (id) { return ruta(id, "pdf"); },
+    listarEntrevistas: function () { return pedir("GET", "/api/entrevistas").then(function (r) { return r.entrevistas; }); },
+    guardarEntrevista: function (e) { return pedir("POST", "/api/entrevistas", e); },
+    eliminarEntrevista: function (id) { return pedir("POST", "/api/entrevistas/" + encodeURIComponent(id) + "/eliminar", {}); }
   };
 
   // ---------------------------------------------------------------------------
@@ -367,7 +410,8 @@
   };
 
   ["registrar", "entrar", "salir", "guardarDatos", "cambiarNombre", "cambiarContrasena", "eliminar",
-    "listarCvs", "guardarCv", "eliminarCv", "obtenerCv", "leerTex", "urlPdf"].forEach(function (nombre) {
+    "listarCvs", "guardarCv", "eliminarCv", "obtenerCv", "leerTex", "urlPdf",
+    "listarEntrevistas", "guardarEntrevista", "eliminarEntrevista"].forEach(function (nombre) {
     Cuentas[nombre] = function () { return almacen[nombre].apply(almacen, arguments); };
   });
 

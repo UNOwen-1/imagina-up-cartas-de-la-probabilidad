@@ -74,6 +74,15 @@ def iniciar() -> None:
                 pdf        BLOB,
                 datos      TEXT NOT NULL DEFAULT '{}'
             );
+            CREATE TABLE IF NOT EXISTS entrevistas (
+                id           INTEGER PRIMARY KEY,
+                usuario_id   INTEGER NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+                creado       REAL NOT NULL,
+                puesto       TEXT NOT NULL DEFAULT '',
+                empresa      TEXT NOT NULL DEFAULT '',
+                calificacion INTEGER NOT NULL,
+                datos        TEXT NOT NULL DEFAULT '{}'   -- veredicto, fortalezas, mejoras y respuestas
+            );
             """
         )
         con.execute("DELETE FROM sesiones WHERE expira < ?", (time.time(),))
@@ -309,6 +318,62 @@ def obtener_cv(usuario: sqlite3.Row, cv_id: int) -> sqlite3.Row:
     if fila is None:
         raise ErrorCuenta("No se encontró ese CV.", 404)
     return fila
+
+
+# ---------------------------------------------------------------------------
+# Historial de calificaciones (simulaciones de entrevista)
+# ---------------------------------------------------------------------------
+
+MAX_ENTREVISTAS = 100  # por cuenta; al pasar el límite se borran las más antiguas
+
+
+def _fila_entrevista(fila: sqlite3.Row) -> dict:
+    return {
+        "id": fila["id"], "creado": fila["creado"], "puesto": fila["puesto"], "empresa": fila["empresa"],
+        "calificacion": fila["calificacion"], **json.loads(fila["datos"] or "{}"),
+    }
+
+
+def listar_entrevistas(usuario: sqlite3.Row) -> list[dict]:
+    with closing(_conectar()) as con:
+        filas = con.execute(
+            "SELECT * FROM entrevistas WHERE usuario_id = ? ORDER BY creado DESC", (usuario["id"],)
+        ).fetchall()
+    return [_fila_entrevista(f) for f in filas]
+
+
+def guardar_entrevista(usuario: sqlite3.Row, e) -> dict:
+    if not isinstance(e, dict):
+        raise ErrorCuenta("Datos inválidos.")
+    try:
+        calificacion = int(e.get("calificacion"))
+    except (TypeError, ValueError):
+        raise ErrorCuenta("La calificación no es válida.")
+    if not 1 <= calificacion <= 10:
+        raise ErrorCuenta("La calificación debe estar entre 1 y 10.")
+    detalle = {k: e.get(k) for k in ("veredicto", "fortalezas", "mejoras", "preguntas")}
+    datos_json = json.dumps(detalle, ensure_ascii=False)
+    if len(datos_json.encode("utf-8")) > MAX_DATOS:
+        raise ErrorCuenta("La entrevista es demasiado grande para guardarse.")
+    with closing(_conectar()) as con, con:
+        cur = con.execute(
+            "INSERT INTO entrevistas (usuario_id, creado, puesto, empresa, calificacion, datos) VALUES (?, ?, ?, ?, ?, ?)",
+            (usuario["id"], time.time(), str(e.get("puesto") or "")[:120], str(e.get("empresa") or "")[:120], calificacion, datos_json),
+        )
+        con.execute(
+            "DELETE FROM entrevistas WHERE usuario_id = ? AND id NOT IN "
+            "(SELECT id FROM entrevistas WHERE usuario_id = ? ORDER BY creado DESC LIMIT ?)",
+            (usuario["id"], usuario["id"], MAX_ENTREVISTAS),
+        )
+        fila = con.execute("SELECT * FROM entrevistas WHERE id = ?", (cur.lastrowid,)).fetchone()
+    return _fila_entrevista(fila)
+
+
+def eliminar_entrevista(usuario: sqlite3.Row, entrevista_id: int) -> None:
+    with closing(_conectar()) as con, con:
+        cur = con.execute("DELETE FROM entrevistas WHERE id = ? AND usuario_id = ?", (entrevista_id, usuario["id"]))
+    if cur.rowcount == 0:
+        raise ErrorCuenta("No se encontró esa entrevista.", 404)
 
 
 def eliminar_cv(usuario: sqlite3.Row, cv_id: int) -> None:
