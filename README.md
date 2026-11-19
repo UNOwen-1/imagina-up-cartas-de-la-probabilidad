@@ -25,7 +25,9 @@ Proyecto de hackatón · MVP funcional en una página web local.
 
 **Dos flujos** (pestañas arriba de la barra de pasos):
 - **📄 Crear mi CV** (agentes 1–3): Tu historia → Tus habilidades → Proyectos y logros → Vacantes → **Tu CV**. Termina con el CV listo.
-- **🎤 Entrenar entrevista** (agente 4): Prepara tu práctica → Entrevista. Se puede practicar para la vacante del CV actual, para un CV guardado en tu cuenta o para cualquier vacante del catálogo (contando brevemente tu historia), **sin necesidad de hacer el CV**.
+- **🎤 Entrenar entrevista** (agente 4): Elige la vacante → Aprendizaje y práctica → Simulación. Se puede practicar para la vacante del CV actual, para un CV guardado en tu cuenta o para cualquier vacante del catálogo (contando brevemente tu historia), **sin necesidad de hacer el CV**.
+  - **Aprendizaje y práctica:** en qué se fijan las empresas (puntualidad, presentación, lenguaje corporal, comunicación, actitud, ejemplos concretos, conocer la empresa, honestidad…), consejos para antes/durante/después, el método SAR con un ejemplo de tu historia, las habilidades que pide la vacante, errores comunes y preguntas para hacer al final. Después, **práctica guiada** de 3 preguntas con retroalimentación en cada respuesta.
+  - **Simulación:** una entrevista de 3 preguntas distintas (presentación, experiencia y situacional), seguidas y sin pistas. Al final: **calificación de 1 a 10**, lo que hiciste bien, **observaciones de mejora** y el detalle de cada respuesta. Cada nueva simulación usa otras preguntas.
 
 👤 **Humano en el circuito:** la IA propone y explica; la persona **aprueba, quita o agrega** en cada paso. La IA no inventa habilidades.
 
@@ -72,7 +74,7 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 3. **Paso 3 (opcional):** **Proyectos y logros**, con una guía de qué escribir y cómo. Agregar uno o dar clic en **"Omitir, no agregar nada"** (el CV queda sin esas secciones).
 4. **Paso 4:** mostrar el **% de compatibilidad**, "por qué encajas" y "para crecer". Elegir la primera vacante.
 5. **Paso 5:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**. Aquí termina el flujo del CV.
-6. **Entrenar entrevista:** clic en **"🎤 Entrenar la entrevista para esta vacante"** (o en la pestaña **🎤 Entrenar entrevista**) → **Empezar entrevista** → **🔊 Escuchar pregunta** → **🎤 Responder con mi voz** → **Evaluar**. Mostrar las estrellas y la respuesta de ejemplo.
+6. **Entrenar entrevista:** clic en **"🎤 Entrenar la entrevista para esta vacante"** (o en la pestaña **🎤 Entrenar entrevista**) → **Empezar a entrenar**. Mostrar **En qué se fijan las empresas**, responder una pregunta de la práctica (**🎤 Responder con mi voz** → **Evaluar**) y luego **Ir a la simulación** → contestar las 3 preguntas → mostrar la **calificación /10** y las **observaciones de mejora**.
 
 > Cierre: *"En menos de 2 minutos, Mariana pasó de 'no tengo experiencia' a tener un CV, 3 vacantes y una entrevista practicada."*
 
