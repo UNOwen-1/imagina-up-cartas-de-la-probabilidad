@@ -265,7 +265,6 @@ input:focus, textarea:focus { border-color: var(--primario); outline: none; box-
   background: var(--superficie-2); color: var(--texto-suave); text-transform: uppercase; letter-spacing: .03em;
 }
 .etiqueta-tecnica { background: var(--primario-suave); color: var(--primario-texto); }
-.etiqueta-digital { background: var(--acento-suave); color: var(--acento-texto); }
 .etiqueta-blanda { background: var(--exito-suave); color: var(--exito); }
 .etiqueta-verde { background: var(--exito-suave); color: var(--exito); }
 .etiqueta-gris { background: var(--superficie-2); color: var(--texto-suave); }
