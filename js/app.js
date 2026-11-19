@@ -1547,6 +1547,7 @@
     mostrarVista("app");
   }
 
+  let salidaPendiente = false;
   async function cerrarSesionLocal() {
     estado.cuenta = null;
     reiniciar();
@@ -1762,6 +1763,20 @@
     $("#btn-salir").addEventListener("click", async function () {
       try { await window.Cuentas.salir(); } catch (e) { /* la sesión local se cierra igual */ }
       await cerrarSesionLocal();
+    });
+
+    // Al salir de la página (cerrar la pestaña, recargar o ir a otro sitio) la sesión se cierra.
+    window.addEventListener("pagehide", function () {
+      if (!estado.cuenta) return;
+      window.Cuentas.cerrarAlSalir();
+      salidaPendiente = true;
+    });
+    // Si el navegador restaura la página desde su caché al volver atrás, se muestra el acceso.
+    window.addEventListener("pageshow", function (ev) {
+      if (ev.persisted && salidaPendiente) {
+        salidaPendiente = false;
+        cerrarSesionLocal();
+      }
     });
 
     const s = await window.Cuentas.sesion();
