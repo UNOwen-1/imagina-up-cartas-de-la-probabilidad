@@ -64,10 +64,11 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 ## Guion de la demo (90 segundos)
 
 1. **Paso 1:** clic en **"✨ Usar ejemplo (Mariana)"** → **"Analizar mi historia"**. Señalar el panel de agentes trabajando.
-2. **Paso 2:** mostrar que cada habilidad tiene **evidencia**. Quitar una para demostrar que *tú decides*. → **"Aprobar y buscar vacantes"**.
-3. **Paso 3:** mostrar el **% de compatibilidad**, "por qué encajas" y "para crecer". Elegir la primera vacante.
-4. **Paso 4:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**.
-5. **Paso 5:** **🔊 Escuchar pregunta** → **🎤 Responder con mi voz** → **Evaluar**. Mostrar las estrellas y la respuesta de ejemplo.
+2. **Paso 2:** mostrar que cada habilidad tiene **evidencia**. Quitar una para demostrar que *tú decides*. → **"Aprobar y continuar"**.
+3. **Paso 3 (opcional):** **Proyectos y logros**, con una guía de qué escribir y cómo. Agregar uno o dar clic en **"Omitir, no agregar nada"** (el CV queda sin esas secciones).
+4. **Paso 4:** mostrar el **% de compatibilidad**, "por qué encajas" y "para crecer". Elegir la primera vacante.
+5. **Paso 5:** comparación **antes / después** del CV y "¿Qué cambió y por qué?". Opcional: **Descargar CV (PDF)**.
+6. **Paso 6:** **🔊 Escuchar pregunta** → **🎤 Responder con mi voz** → **Evaluar**. Mostrar las estrellas y la respuesta de ejemplo.
 
 > Cierre: *"En menos de 2 minutos, Mariana pasó de 'no tengo experiencia' a tener un CV, 3 vacantes y una entrevista practicada."*
 
@@ -77,7 +78,7 @@ La insignia de arriba a la derecha muestra **🤖 IA real** o **⚡ Modo demo**.
 
 ```
 Hackaton/
-├── index.html          # La página (5 pasos + panel de agentes)
+├── index.html          # La página (6 pasos + panel de agentes)
 ├── css/estilos.css     # Estilos: paleta y tipografías para aprendizaje
 ├── js/
 │   ├── app.js          # Lógica de la interfaz, voz y conexión con los agentes
@@ -120,7 +121,7 @@ También incluye: **contraste WCAG AA**, tamaño base de 17 px, interlineado 1.6
 
 - **Navegador:** Chrome o Edge (recomendado para voz). Firefox funciona, pero sin dictado por voz.
 - **Voz:** el dictado usa la Web Speech API del navegador. En Chrome necesita internet y permiso de micrófono.
-- **CV en LaTeX:** el CV adaptado usa una plantilla LaTeX de una página (secciones Perfil, Educación, Experiencia y Habilidades técnicas/blandas). En el paso 4 hay tres opciones:
+- **CV en LaTeX:** el CV adaptado usa una plantilla LaTeX de una página (secciones Perfil, Educación, Experiencia, Proyectos, Logros y Habilidades técnicas/blandas; Proyectos y Logros solo aparecen si se llenaron en el paso 3). En el paso 5 hay tres opciones:
   - **Descargar CV (PDF):** abre la ventana de impresión con el mismo diseño de la plantilla; elijan **Guardar como PDF**.
   - **Descargar LaTeX (.tex):** el archivo fuente para editarlo y compilarlo con `pdflatex`.
   - **Abrir en Overleaf:** envía el `.tex` a overleaf.com, que genera el PDF (servicio externo).

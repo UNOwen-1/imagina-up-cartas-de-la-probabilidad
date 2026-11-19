@@ -58,6 +58,9 @@
         detalle: "Enfoque: " + vacante.puesto + " en " + vacante.empresa,
         logros: cv.logros
       },
+      // Del paso 3 (opcional): si se omitió, quedan vacías y sus secciones no aparecen.
+      proyectos: perfil.proyectos || [],
+      logros: perfil.reconocimientos || [],
       tecnicas: tecnicas,
       blandas: blandas,
       disponibilidad: vacante.jornada + ", " + vacante.modalidad.toLowerCase() + ". Inicio inmediato."
@@ -210,6 +213,33 @@
       L.push("  \\resumeSubHeadingListEnd", "");
     }
 
+    // Proyectos (equivalente a "Projects" de la plantilla)
+    if (d.proyectos.length) {
+      L.push("\\section{Proyectos}");
+      L.push("    \\resumeSubHeadingListStart");
+      d.proyectos.forEach(function (p) {
+        L.push("      \\resumeProjectHeading");
+        L.push("          {\\textbf{" + esc(p.nombre) + "}" + (p.herramientas ? " $|$ \\emph{" + esc(p.herramientas) + "}" : "") + "}{" + esc(p.fecha) + "}");
+        if (p.descripcion.length) {
+          L.push("          \\resumeItemListStart");
+          p.descripcion.forEach(function (linea) { L.push("            \\resumeItem{" + esc(linea) + "}"); });
+          L.push("          \\resumeItemListEnd");
+        }
+      });
+      L.push("    \\resumeSubHeadingListEnd", "");
+    }
+
+    // Logros (equivalente a "Achievements" de la plantilla)
+    if (d.logros.length) {
+      L.push("\\section{Logros}");
+      L.push("    \\resumeSubHeadingListStart");
+      d.logros.forEach(function (l) {
+        L.push("      \\resumeProjectHeading");
+        L.push("          {\\textbf{" + esc(l.titulo) + "}" + (l.detalle ? " $|$ \\emph{" + esc(l.detalle) + "}" : "") + "}{" + esc(l.fecha) + "}");
+      });
+      L.push("    \\resumeSubHeadingListEnd", "");
+    }
+
     // Habilidades (equivalente a "Technical Skills" de la plantilla)
     const lineas = [];
     if (d.tecnicas.length) lineas.push("     \\textbf{Técnicas}{: " + esc(d.tecnicas.join(", ")) + ".}");
@@ -260,6 +290,26 @@
         fila(el("strong", { text: d.experiencia.titulo }), d.experiencia.lugar),
         fila(el("em", { text: d.experiencia.detalle }), "", "lx-sub"),
         el("ul", null, d.experiencia.logros.map(function (l) { return el("li", { text: l }); }))));
+    }
+
+    const encabezado = function (titulo, detalle) {
+      return detalle ? [el("strong", { text: titulo }), " | ", el("em", { text: detalle })] : el("strong", { text: titulo });
+    };
+
+    if (d.proyectos.length) {
+      partes.push(seccion("Proyectos"));
+      d.proyectos.forEach(function (p) {
+        partes.push(el("div", { class: "lx-bloque" },
+          fila(encabezado(p.nombre, p.herramientas), p.fecha, "lx-sub"),
+          p.descripcion.length ? el("ul", null, p.descripcion.map(function (l) { return el("li", { text: l }); })) : null));
+      });
+    }
+
+    if (d.logros.length) {
+      partes.push(seccion("Logros"));
+      d.logros.forEach(function (l) {
+        partes.push(el("div", { class: "lx-bloque lx-compacto" }, fila(encabezado(l.titulo, l.detalle), l.fecha, "lx-sub")));
+      });
     }
 
     partes.push(seccion("Habilidades"), el("div", { class: "lx-texto" },

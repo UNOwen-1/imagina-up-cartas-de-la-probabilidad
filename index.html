@@ -32,9 +32,10 @@
     <ol id="lista-pasos">
       <li data-paso="1" class="activo"><span class="num">1</span><span class="txt">Tu historia</span></li>
       <li data-paso="2"><span class="num">2</span><span class="txt">Tus habilidades</span></li>
-      <li data-paso="3"><span class="num">3</span><span class="txt">Vacantes</span></li>
-      <li data-paso="4"><span class="num">4</span><span class="txt">Tu CV</span></li>
-      <li data-paso="5"><span class="num">5</span><span class="txt">Entrevista</span></li>
+      <li data-paso="3"><span class="num">3</span><span class="txt">Proyectos y logros</span></li>
+      <li data-paso="4"><span class="num">4</span><span class="txt">Vacantes</span></li>
+      <li data-paso="5"><span class="num">5</span><span class="txt">Tu CV</span></li>
+      <li data-paso="6"><span class="num">6</span><span class="txt">Entrevista</span></li>
     </ol>
   </nav>
 
@@ -152,23 +153,62 @@
 
         <div class="acciones acciones-final">
           <button class="btn btn-fantasma" type="button" data-ir="1">← Volver</button>
-          <button id="btn-aprobar-perfil" class="btn btn-primario" type="button">✔ Aprobar y buscar vacantes →</button>
+          <button id="btn-aprobar-perfil" class="btn btn-primario" type="button">✔ Aprobar y continuar →</button>
         </div>
       </section>
 
-      <!-- PASO 3: Vacantes -->
+      <!-- PASO 3: Proyectos y logros (opcional) -->
       <section id="paso-3" class="paso" aria-labelledby="t-paso-3">
-        <h2 id="t-paso-3">Vacantes para ti</h2>
+        <h2 id="t-paso-3">¿Tienes proyectos o logros? <span class="opcional">Opcional</span></h2>
+        <p class="ayuda">Un CV con proyectos y logros demuestra lo que sabes hacer, aunque nunca hayas tenido un empleo formal. Si no tienes nada que agregar ahora, <strong>puedes omitir este paso</strong> y tu CV queda igual.</p>
+
+        <div class="tarjeta tarjeta-suave guia">
+          <h3>💡 ¿Qué cuenta como proyecto?</h3>
+          <p>Algo que hiciste de principio a fin, solo o en equipo: un trabajo escolar importante, un emprendimiento o venta por tu cuenta, una página o app, videos para un negocio, un evento que organizaste, un voluntariado, algo que reparaste o construiste.</p>
+          <h3>🏆 ¿Qué cuenta como logro?</h3>
+          <p>Un reconocimiento o resultado que alguien más pueda comprobar: un lugar en un concurso o torneo, una beca, un diploma o certificado, un promedio destacado, ser jefe de grupo, una meta cumplida con números.</p>
+          <h3>✍️ Cómo escribirlo bien</h3>
+          <ul class="lista-check">
+            <li>Empieza con un verbo: <em>Creé, Organicé, Vendí, Diseñé, Enseñé</em>.</li>
+            <li>Di qué hiciste y con qué herramientas (Canva, Excel, Python, celular…).</li>
+            <li>Agrega un resultado, de preferencia con número: <em>«vendí 120 piezas en 2 meses»</em>.</li>
+            <li>Solo escribe cosas reales: en la entrevista te pueden preguntar por ellas.</li>
+          </ul>
+          <p class="ejemplo-guia"><strong>Ejemplo de proyecto:</strong> «Venta de postres en la escuela» · Instagram, Excel · 2024 → <em>Organicé la producción y venta de postres; vendí más de 300 piezas en un semestre y llevé las cuentas en Excel.</em></p>
+        </div>
+
+        <div class="tarjeta">
+          <h3>Proyectos</h3>
+          <div id="lista-proyectos" class="lista-extras"></div>
+          <button id="btn-agregar-proyecto" class="btn btn-secundario btn-chico" type="button">+ Agregar proyecto</button>
+        </div>
+
+        <div class="tarjeta">
+          <h3>Logros</h3>
+          <div id="lista-logros" class="lista-extras"></div>
+          <button id="btn-agregar-logro" class="btn btn-secundario btn-chico" type="button">+ Agregar logro</button>
+        </div>
+
+        <div class="acciones acciones-final">
+          <button class="btn btn-fantasma" type="button" data-ir="2">← Volver</button>
+          <button id="btn-omitir-extras" class="btn btn-secundario" type="button">Omitir, no agregar nada →</button>
+          <button id="btn-guardar-extras" class="btn btn-primario" type="button">✔ Guardar y buscar vacantes →</button>
+        </div>
+      </section>
+
+      <!-- PASO 4: Vacantes -->
+      <section id="paso-4" class="paso" aria-labelledby="t-paso-4">
+        <h2 id="t-paso-4">Vacantes para ti</h2>
         <p class="ayuda">El <strong>Buscador</strong> revisó <span id="total-vacantes">30</span> vacantes sin experiencia requerida y eligió las que mejor encajan contigo.</p>
         <div id="lista-vacantes" class="vacantes"></div>
         <div class="acciones acciones-final">
-          <button class="btn btn-fantasma" type="button" data-ir="2">← Volver</button>
+          <button class="btn btn-fantasma" type="button" data-ir="3">← Volver</button>
         </div>
       </section>
 
-      <!-- PASO 4: CV -->
-      <section id="paso-4" class="paso" aria-labelledby="t-paso-4">
-        <h2 id="t-paso-4">Tu CV, adaptado a la vacante</h2>
+      <!-- PASO 5: CV -->
+      <section id="paso-5" class="paso" aria-labelledby="t-paso-5">
+        <h2 id="t-paso-5">Tu CV, adaptado a la vacante</h2>
         <p class="ayuda">El <strong>Adaptador</strong> ajustó tu CV para <strong id="cv-vacante-nombre"></strong>. Compara el antes y el después.</p>
 
         <div class="comparacion">
@@ -190,7 +230,7 @@
         <p class="pista-tipo">Tu CV usa una plantilla LaTeX de una página. «Descargar CV (PDF)» la reproduce en tu navegador; con el archivo <strong>.tex</strong> puedes editarla y compilarla tú. «Abrir en Overleaf» envía tu CV a overleaf.com (sitio externo) para generar el PDF.</p>
 
         <div class="acciones acciones-final">
-          <button class="btn btn-fantasma" type="button" data-ir="3">← Elegir otra vacante</button>
+          <button class="btn btn-fantasma" type="button" data-ir="4">← Elegir otra vacante</button>
           <button id="btn-descargar" class="btn btn-secundario" type="button">⬇ Descargar CV (PDF)</button>
           <button id="btn-descargar-tex" class="btn btn-secundario" type="button">⬇ Descargar LaTeX (.tex)</button>
           <button id="btn-overleaf" class="btn btn-fantasma" type="button">↗ Abrir en Overleaf</button>
@@ -198,9 +238,9 @@
         </div>
       </section>
 
-      <!-- PASO 5: Entrevista -->
-      <section id="paso-5" class="paso" aria-labelledby="t-paso-5">
-        <h2 id="t-paso-5">Practica tu entrevista</h2>
+      <!-- PASO 6: Entrevista -->
+      <section id="paso-6" class="paso" aria-labelledby="t-paso-6">
+        <h2 id="t-paso-6">Practica tu entrevista</h2>
         <p class="ayuda">El <strong>Entrenador</strong> te hará 3 preguntas reales para <strong id="ent-vacante-nombre"></strong>. Responde con tu voz o escribiendo.</p>
 
         <div id="entrevista" class="tarjeta">
@@ -245,7 +285,7 @@
             <li>Practicaste tu entrevista</li>
           </ul>
           <div class="acciones">
-            <button class="btn btn-secundario" type="button" data-ir="4">Ver mi CV</button>
+            <button class="btn btn-secundario" type="button" data-ir="5">Ver mi CV</button>
             <button id="btn-otra-vez" class="btn btn-primario" type="button">Practicar otra vez</button>
           </div>
         </div>

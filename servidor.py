@@ -139,7 +139,9 @@ AGENTES = {
             "la empresa), 'habilidades_destacadas' (máximo 6 nombres, primero las que pide la vacante), 'logros' (3 a 4 "
             "viñetas que conviertan sus experiencias informales en logros profesionales, usando solo hechos de su perfil) "
             "y 'cambios' (3 a 4 frases que expliquen qué cambiaste y por qué; si la vacante pide algo que la persona no "
-            "tiene, explica que no lo agregaste para no inventar). " + REGLAS_COMUNES
+            "tiene, explica que no lo agregaste para no inventar). Si el perfil incluye 'proyectos' o 'reconocimientos', "
+            "esos ya aparecen en sus propias secciones del CV: no los copies en 'logros', aunque puedes mencionarlos en "
+            "el resumen si son relevantes para la vacante. " + REGLAS_COMUNES
         ),
         "esquema": {
             "type": "object",

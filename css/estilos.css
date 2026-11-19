@@ -406,12 +406,32 @@ details p { background: var(--superficie-2); padding: .7rem .85rem; border-radiu
   }
   .lx-bloque { margin: 0 0 4pt .15in; break-inside: avoid; }
   .lx-fila { display: flex; justify-content: space-between; gap: 1em; }
+  .lx-compacto { margin-bottom: 1pt; }
   .lx-sub { font-size: 9.5pt; }
   .lx-texto { margin: 0 0 0 .15in; font-size: 9.5pt; }
   .lx-texto p { margin: 0 0 1pt; }
   .cv-imprimir ul { margin: 2pt 0 0; padding-left: .3in; font-size: 9.5pt; }
   .cv-imprimir li { margin-bottom: 1pt; }
 }
+
+/* Paso 3: proyectos y logros */
+.opcional {
+  display: inline-block; vertical-align: middle; margin-left: .4rem; padding: .15rem .6rem; border-radius: 999px;
+  font-size: .75rem; font-weight: 600; background: var(--superficie-2); color: var(--texto-suave); border: 1px solid var(--borde);
+}
+.guia h3 { font-size: 1rem; margin: .9rem 0 .3rem; }
+.guia h3:first-child { margin-top: 0; }
+.guia p { margin: 0 0 .4rem; }
+.guia .lista-check { margin-bottom: .6rem; }
+.ejemplo-guia { padding: .6rem .8rem; border-left: 3px solid var(--primario); background: var(--superficie); border-radius: 8px; font-size: .92rem; }
+.tarjeta > h3 { margin-top: 0; }
+.lista-extras { display: grid; gap: .8rem; margin-bottom: .8rem; }
+.lista-extras:empty { display: none; }
+.extra { padding: .9rem; border: 1px dashed var(--borde); border-radius: 12px; animation: aparecer .25s ease; }
+.fila-extra { display: grid; grid-template-columns: 1.4fr 1fr 110px; gap: .8rem; }
+@media (max-width: 640px) { .fila-extra { grid-template-columns: 1fr; } }
+.extra .campo { margin-bottom: .6rem; }
+.quitar-extra { margin-left: auto; display: block; }
 
 /* Datos opcionales del CV en el paso 1 */
 .datos-cv { margin-top: .8rem; }
