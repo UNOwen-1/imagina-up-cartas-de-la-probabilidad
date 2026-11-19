@@ -24,7 +24,7 @@ from pathlib import Path
 
 RUTA_BD = Path(os.environ.get("DESPEGA_BD") or Path(__file__).resolve().parent / "datos" / "despega.db")
 ITERACIONES = 310_000
-DURACION_SESION = 12 * 3600  # respaldo: la página cierra la sesión al salir
+DURACION_SESION = 12 * 3600  # respaldo: la sesión termina al cerrar la pestaña o el navegador
 MAX_DATOS = 100_000  # bytes de JSON por cuenta
 MAX_TEX = 120_000
 MAX_CVS = 50  # por cuenta; al pasar el límite se borran los más antiguos

@@ -45,6 +45,7 @@
     contacto: {},          // { telefono, correo, ciudad, enlace } — solo para el CV, no se envía a la IA
     cuenta: null,          // { nombre, datos } si hay sesión iniciada
     cuentasDisponibles: false,
+    invitado: false,       // true si la persona eligió "continuar sin cuenta"
     flujo: "cv",           // "cv" (pasos 1–5) o "entrevista" (entrenamiento aparte)
     entrevista: { vacante: null, perfil: null },  // vacante y perfil con los que se practica
     simulacion: { preguntas: [], i: 0, respuestas: [], resultado: null },
@@ -223,6 +224,7 @@
     estado.paso = n;
     marcarFlujo("cv");
     mostrarSeccion("paso", "#lista-pasos", n);
+    programarBorrador();
   }
 
   // Flujo de entrenamiento: una sola pantalla. Se elige la vacante y hay dos pestañas:
@@ -244,6 +246,7 @@
     $("#panel-simulacion").hidden = apr;
     if (!apr) mostrarEstadoSimulacion();
     ubicarSobreTi();
+    programarBorrador();
   }
 
   // ---------- Paso 1 → Perfilador ----------
@@ -1156,6 +1159,7 @@
     $("#sim-respuesta").value = "";
     $("#btn-sim-responder").textContent = textoBotonSimulacion();
     $("#sim-respuesta").focus({ preventScroll: true });
+    programarBorrador();
   }
 
   function textoBotonSimulacion() {
@@ -1190,6 +1194,7 @@
       return x && typeof x.calificacion === "number" && Array.isArray(x.fortalezas) && Array.isArray(x.mejoras) && Array.isArray(x.por_pregunta);
     });
     sim.resultado = r;
+    programarBorrador();
     registrar("entrenador", "simulación calificada: " + Math.round(r.calificacion) + "/10.");
     renderResultadoSimulacion();
     guardarSimulacionEnCuenta();
@@ -1245,6 +1250,7 @@
     $("#ent-retro").hidden = true;
     $("#btn-evaluar").hidden = false;
     $("#btn-siguiente").textContent = estado.iPregunta < estado.preguntas.length - 1 ? "Siguiente pregunta →" : "Ver mi resultado →";
+    programarBorrador();
   }
 
   async function evaluarRespuesta() {
@@ -1484,8 +1490,10 @@
     $(".pasos").hidden = vista !== "app";
     $(".distribucion").hidden = vista !== "app";
     $("#btn-reiniciar").hidden = vista === "acceso";
+    estado.vista = vista;
     actualizarEncabezado(vista);
     window.scrollTo({ top: 0 });
+    programarBorrador();
   }
 
   function actualizarEncabezado(vista) {
@@ -1543,13 +1551,17 @@
 
   async function iniciarConCuenta(usuario) {
     estado.cuenta = { nombre: usuario.nombre, datos: usuario.datos || {} };
+    estado.invitado = false;
+    marcarPestana(true);
     reiniciar();  // limpia el flujo y llena los pasos con los datos guardados
     mostrarVista("app");
   }
 
-  let salidaPendiente = false;
   async function cerrarSesionLocal() {
     estado.cuenta = null;
+    estado.invitado = false;
+    marcarPestana(false);
+    borrarBorrador();
     reiniciar();
     $("#form-acceso").reset();
     cambiarModoAcceso("entrar");
@@ -1750,7 +1762,7 @@
     $("#tab-entrar").addEventListener("click", function () { cambiarModoAcceso("entrar"); });
     $("#tab-crear").addEventListener("click", function () { cambiarModoAcceso("crear"); });
     $("#form-acceso").addEventListener("submit", enviarAcceso);
-    $("#btn-invitado").addEventListener("click", function () { mostrarVista("app"); });
+    $("#btn-invitado").addEventListener("click", function () { estado.invitado = true; mostrarVista("app"); });
     $("#btn-entrar").addEventListener("click", function () { cambiarModoAcceso("entrar"); mostrarVista("acceso"); $("#acc-nombre").focus(); });
     $("#btn-cuenta").addEventListener("click", abrirMiCuenta);
     $("#btn-volver-app").addEventListener("click", function () { mostrarVista("app"); });
@@ -1765,28 +1777,197 @@
       await cerrarSesionLocal();
     });
 
-    // Al salir de la página (cerrar la pestaña, recargar o ir a otro sitio) la sesión se cierra.
-    window.addEventListener("pagehide", function () {
-      if (!estado.cuenta) return;
-      window.Cuentas.cerrarAlSalir();
-      salidaPendiente = true;
-    });
-    // Si el navegador restaura la página desde su caché al volver atrás, se muestra el acceso.
-    window.addEventListener("pageshow", function (ev) {
-      if (ev.persisted && salidaPendiente) {
-        salidaPendiente = false;
-        cerrarSesionLocal();
-      }
-    });
-
     const s = await window.Cuentas.sesion();
     estado.cuentasDisponibles = s.disponible;
+    // La sesión dura lo que dura la pestaña: con el servidor la cookie se comparte entre
+    // pestañas, así que una pestaña nueva (sin la marca de esta pestaña) pide iniciar sesión.
+    if (s.usuario && s.modo === "servidor" && !pestanaConSesion()) s.usuario = null;
     $("#nota-cuentas").textContent = s.modo === "navegador"
       ? "🔒 Tu cuenta se guarda en este navegador y en este equipo. Para ver tus datos, entra siempre desde aquí."
       : "🔒 Tu cuenta se guarda en el servidor de Despega de este equipo.";
     if (!s.disponible && s.motivo) console.info("Cuentas no disponibles:", s.motivo);
-    if (s.usuario) await iniciarConCuenta(s.usuario);
-    else mostrarVista(s.disponible ? "acceso" : "app");  // sin servidor: modo invitado directo
+    const borrador = leerBorrador();
+    if (s.usuario) {
+      await iniciarConCuenta(s.usuario);
+      if (borrador && borrador.dueno === s.usuario.nombre) await restaurarBorrador(borrador);
+    } else if (!s.disponible || (borrador && borrador.invitado)) {
+      estado.invitado = true;  // sin cuentas, o invitado que recargó la página
+      mostrarVista("app");
+      if (borrador && borrador.invitado) await restaurarBorrador(borrador);
+    } else {
+      mostrarVista("acceso");
+    }
+    restaurando = false;
+
+    // Autoguardado: al escribir, al cambiar de pestaña del navegador y al recargar o cerrar.
+    document.addEventListener("input", programarBorrador);
+    document.addEventListener("change", programarBorrador);
+    document.addEventListener("visibilitychange", function () {
+      if (document.visibilityState === "hidden") { guardarBorrador(); guardarCambiosEnCuenta(); }
+    });
+    window.addEventListener("pagehide", function () { guardarBorrador(); guardarCambiosEnCuenta(); });
+  }
+
+  // ---------- Autoguardado (borrador de esta pestaña) ----------
+  // Todo el avance (pasos, campos, vacantes, CV, práctica y simulación) se guarda en
+  // sessionStorage: sobrevive a recargar la página y se borra al cerrar la pestaña.
+  const CLAVE_BORRADOR = "despega.borrador.v1";
+  const CLAVE_PESTANA = "despega.pestana.v1";
+  const CAMPOS_BORRADOR = ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#ent-nombre", "#ent-historia",
+    "#in-respuesta", "#sim-respuesta"].concat(CAMPOS_CV);
+  let restaurando = true;   // no se guarda mientras se carga la página
+  let temporizadorBorrador = null;
+
+  function marcarPestana(activa) {
+    try { if (activa) sessionStorage.setItem(CLAVE_PESTANA, "1"); else sessionStorage.removeItem(CLAVE_PESTANA); }
+    catch (e) { /* sin sessionStorage */ }
+  }
+  function pestanaConSesion() {
+    try { return sessionStorage.getItem(CLAVE_PESTANA) === "1"; } catch (e) { return false; }
+  }
+
+  function leerBorrador() {
+    try { return JSON.parse(sessionStorage.getItem(CLAVE_BORRADOR) || "null"); } catch (e) { return null; }
+  }
+  function borrarBorrador() {
+    clearTimeout(temporizadorBorrador);
+    try { sessionStorage.removeItem(CLAVE_BORRADOR); } catch (e) { /* nada que borrar */ }
+  }
+  function programarBorrador() {
+    if (restaurando) return;
+    clearTimeout(temporizadorBorrador);
+    temporizadorBorrador = setTimeout(guardarBorrador, 400);
+  }
+
+  // Proyectos y logros tal como están escritos (también los que aún no tienen nombre).
+  function filasExtras(selProyectos, selLogros) {
+    const valor = function (f, clase) { return f.querySelector("." + clase).value; };
+    return {
+      proyectos: $$(selProyectos + " .extra").map(function (f) {
+        return { nombre: valor(f, "p-nombre"), herramientas: valor(f, "p-herramientas"), fecha: valor(f, "p-fecha"), descripcion: valor(f, "p-descripcion").split("\n") };
+      }),
+      logros: $$(selLogros + " .extra").map(function (f) {
+        return { titulo: valor(f, "l-titulo"), detalle: valor(f, "l-detalle"), fecha: valor(f, "l-fecha") };
+      })
+    };
+  }
+
+  function guardarBorrador() {
+    clearTimeout(temporizadorBorrador);
+    if (restaurando || (!estado.cuenta && !estado.invitado)) return;
+    const campos = {};
+    CAMPOS_BORRADOR.forEach(function (s) { campos[s] = $(s).value; });
+    const b = {
+      version: 1,
+      dueno: estado.cuenta ? estado.cuenta.nombre : null,
+      invitado: !estado.cuenta,
+      vista: estado.vista === "cuenta" ? "cuenta" : "app",
+      flujo: estado.flujo, paso: estado.paso, tabEnt: estado.tabEnt,
+      campos: campos,
+      datosCvAbierto: $(".datos-cv").open,
+      extras: filasExtras("#lista-proyectos", "#lista-logros"),
+      perfil: estado.perfil, recomendaciones: estado.recomendaciones, vacante: estado.vacante, cv: estado.cv, contacto: estado.contacto,
+      entrenamiento: claveVacanteEnt === null ? null : {
+        clave: claveVacanteEnt,
+        fuente: fuenteEntrevista(),
+        catalogo: $("#ent-catalogo").value,
+        entrevista: estado.entrevista,
+        simulacion: estado.simulacion,
+        ultimoProblema: ultimoProblemaSim,
+        practica: { preguntas: estado.preguntas, i: estado.iPregunta, puntajes: estado.puntajes, final: !$("#ent-final").hidden },
+        problemas: nodoProblemas ? $$("#ent-aprendizaje .problema textarea").map(function (t) { return t.value; }) : null
+      }
+    };
+    try { sessionStorage.setItem(CLAVE_BORRADOR, JSON.stringify(b)); } catch (e) { /* sin espacio: no se guarda el borrador */ }
+  }
+
+  async function restaurarBorrador(b) {
+    if (!b || b.version !== 1) return;
+    try {
+      // Paso 1 y paso 3
+      Object.keys(b.campos || {}).forEach(function (s) { const c = $(s); if (c) c.value = b.campos[s]; });
+      if (b.datosCvAbierto) $(".datos-cv").open = true;
+      if (b.extras) llenarExtras("#lista-proyectos", "#lista-logros", b.extras);
+
+      // Perfil, vacantes y CV
+      estado.perfil = b.perfil; estado.recomendaciones = b.recomendaciones || []; estado.vacante = b.vacante;
+      estado.cv = b.cv; estado.contacto = b.contacto || {};
+      if (estado.perfil) {
+        const resumen = $("#in-resumen").value;
+        renderHabilidades();
+        $("#in-resumen").value = resumen;
+      }
+      if (estado.perfil && estado.recomendaciones.length) renderVacantes();
+      if (estado.perfil && estado.vacante && estado.cv) renderCV();
+      irA(b.paso || 1);
+
+      // Entrenamiento
+      const ent = b.entrenamiento;
+      if (ent && ent.entrevista && ent.entrevista.vacante) {
+        if (ent.fuente.indexOf("guardado-") === 0 && estado.cuenta) {
+          try { cvsParaEntrevista = (await window.Cuentas.listarCvs()).slice(0, 5); } catch (e) { /* sin CV guardados */ }
+        }
+        $("#ent-catalogo").value = ent.catalogo;
+        claveVacanteEnt = ent.clave;          // evita que se recargue la vacante y se pierda el avance
+        prepararOpcionesEntrevista(ent.fuente);
+        $("#ent-nombre").value = b.campos["#ent-nombre"] || "";
+        $("#ent-historia").value = b.campos["#ent-historia"] || "";
+        claveVacanteEnt = ent.clave;
+        estado.entrevista = ent.entrevista;
+        ultimoProblemaSim = ent.ultimoProblema || null;
+        const v = ent.entrevista.vacante;
+        $("#ent-vacante-nombre").textContent = v.puesto + " en " + v.empresa;
+        $("#sim-vacante-nombre").textContent = v.puesto + " en " + v.empresa;
+        renderAprendizaje(v, ent.entrevista.perfil);
+        if (ent.problemas) {
+          $$("#ent-aprendizaje .problema textarea").forEach(function (t, i) { t.value = ent.problemas[i] || ""; });
+        }
+
+        // Práctica de aprendizaje
+        reiniciarPractica();
+        const pr = ent.practica || {};
+        if (pr.preguntas && pr.preguntas.length) {
+          estado.preguntas = pr.preguntas; estado.iPregunta = pr.i || 0; estado.puntajes = pr.puntajes || [];
+          $("#ent-practica-inicio").hidden = true;
+          if (pr.final) { estado.iPregunta = estado.preguntas.length - 1; siguientePregunta(); }
+          else { renderPregunta(); $("#in-respuesta").value = b.campos["#in-respuesta"] || ""; }
+        }
+
+        // Simulación
+        estado.simulacion = ent.simulacion || { preguntas: [], i: 0, respuestas: [], resultado: null };
+        const sim = estado.simulacion;
+        if (sim.resultado) renderResultadoSimulacion();
+        else if (sim.preguntas.length) { renderSimPregunta(); $("#sim-respuesta").value = b.campos["#sim-respuesta"] || ""; }
+        mostrarEstadoSimulacion();
+        if (b.flujo === "entrevista") irEnt(b.tabEnt || "aprendizaje");
+        else ubicarSobreTi();
+      } else if (b.flujo === "entrevista") {
+        abrirEntrenamiento();
+      }
+
+      if (b.vista === "cuenta" && estado.cuenta) abrirMiCuenta();
+      window.scrollTo({ top: 0 });
+    } catch (e) {
+      console.error("No se pudo restaurar el avance guardado:", e);
+    }
+  }
+
+  // Con sesión iniciada, los datos del paso 1 y los proyectos y logros también se guardan en la cuenta.
+  function guardarCambiosEnCuenta() {
+    if (!estado.cuenta || restaurando) return;
+    const v = function (sel) { return $(sel).value.trim(); };
+    const extras = leerExtras();
+    const cambios = {
+      edad: v("#in-edad"),
+      historia: v("#in-historia"),
+      contacto: { telefono: v("#in-telefono"), correo: v("#in-correo"), ciudad: v("#in-ciudad"), enlace: v("#in-enlace") },
+      estudios: { escuela: v("#in-escuela"), nivel: v("#in-nivel"), periodo: v("#in-periodo") },
+      proyectos: extras.proyectos,
+      logros: extras.logros
+    };
+    const d = estado.cuenta.datos || {};
+    const distinto = Object.keys(cambios).some(function (k) { return JSON.stringify(cambios[k]) !== JSON.stringify(d[k] == null ? "" : d[k]); });
+    if (distinto) guardarEnCuenta(cambios);
   }
 
   // ---------- Reinicio ----------
@@ -1894,7 +2075,7 @@
       renderPregunta();
     });
 
-    $("#btn-reiniciar").addEventListener("click", function () { reiniciar(); mostrarVista("app"); });
+    $("#btn-reiniciar").addEventListener("click", function () { reiniciar(); mostrarVista("app"); guardarBorrador(); });
     configurarCuentas();
 
     document.addEventListener("click", function (e) {

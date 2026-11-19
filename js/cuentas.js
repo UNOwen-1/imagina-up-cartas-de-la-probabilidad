@@ -11,7 +11,7 @@
   "use strict";
 
   const ITERACIONES = 310000;
-  const DURACION_SESION = 12 * 3600 * 1000; // respaldo: la sesión se cierra al salir de la página
+  const DURACION_SESION = 12 * 3600 * 1000; // respaldo: la sesión se cierra al cerrar la pestaña
   const MAX_CVS = 50;
   const CLAVE_BD = "despega.cuentas.v1";
   const CLAVE_SESION = "despega.sesion.v1";
@@ -90,8 +90,7 @@
     }
   }
 
-  // La sesión vive en sessionStorage: se borra al cerrar la pestaña y,
-  // además, Cuentas.cerrarAlSalir() la borra al salir de la página.
+  // La sesión vive en sessionStorage: sigue al recargar y se borra al cerrar la pestaña o el navegador.
   try { localStorage.removeItem(CLAVE_SESION); } catch (e) { /* sesiones antiguas de 30 días */ }
 
   function leerSesion() {
@@ -183,12 +182,6 @@
       claveActual = null;
       borrarSesion();
       return { ok: true };
-    },
-
-    // Síncrono: se llama al salir de la página (pagehide).
-    cerrarAlSalir: function () {
-      claveActual = null;
-      borrarSesion();
     },
 
     guardarDatos: async function (datos) {
@@ -347,15 +340,6 @@
     registrar: function (nombre, contrasena) { return pedir("POST", "/api/cuenta/registro", { nombre: nombre, contrasena: contrasena }); },
     entrar: function (nombre, contrasena) { return pedir("POST", "/api/cuenta/login", { nombre: nombre, contrasena: contrasena }); },
     salir: function () { return pedir("POST", "/api/cuenta/logout", {}); },
-    // Al salir de la página: keepalive deja terminar la petición aunque la página se cierre.
-    cerrarAlSalir: function () {
-      try {
-        fetch("/api/cuenta/logout", {
-          method: "POST", credentials: "same-origin", keepalive: true,
-          headers: { "Content-Type": "application/json" }, body: "{}"
-        }).catch(function () { /* la cookie de sesión expira al cerrar el navegador */ });
-      } catch (e) { /* sin red: igual expira */ }
-    },
     guardarDatos: function (datos) { return pedir("POST", "/api/cuenta/datos", { datos: datos }); },
     cambiarNombre: function (nombre) { return pedir("POST", "/api/cuenta/nombre", { nombre: nombre }); },
     cambiarContrasena: function (actual, nueva) { return pedir("POST", "/api/cuenta/contrasena", { actual: actual, nueva: nueva }); },
@@ -426,11 +410,6 @@
         return { disponible: true, modo: almacen.modo, usuario: null };
       }
     }
-  };
-
-  // Cierra la sesión al salir de la página (cerrar pestaña, recargar, navegar a otro sitio).
-  Cuentas.cerrarAlSalir = function () {
-    if (Cuentas.modo) almacen.cerrarAlSalir();
   };
 
   ["registrar", "entrar", "salir", "guardarDatos", "cambiarNombre", "cambiarContrasena", "eliminar",
