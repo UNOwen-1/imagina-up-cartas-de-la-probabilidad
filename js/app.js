@@ -17,8 +17,15 @@
       "También manejo el Instagram y el TikTok del negocio; grabo videos de los productos nuevos y ya tenemos más de 2,000 seguidores. " +
       "Llevo el inventario en Excel y aviso a mi papá cuando hay que surtir. " +
       "Los fines de semana doy clases de regularización de matemáticas a mis primos. " +
-      "En la prepa organicé la kermés de fin de año junto con mi grupo."
+      "En la prepa organicé la kermés de fin de año junto con mi grupo.",
+    ciudad: "Guadalajara, MX",
+    escuela: "CETis 14",
+    nivel: "Bachillerato técnico en contabilidad",
+    periodo: "2021 – 2024"
   };
+
+  // Campos opcionales del paso 1 que solo se usan para el CV.
+  const CAMPOS_CV = ["#in-telefono", "#in-correo", "#in-ciudad", "#in-enlace", "#in-escuela", "#in-nivel", "#in-periodo"];
 
   const AGENTES = {
     perfilador: { emoji: "🧭", nombre: "Perfilador" },
@@ -34,6 +41,7 @@
     recomendaciones: [],   // [{ vacante, compatibilidad, por_que, te_falta, consejo }]
     vacante: null,
     cv: null,              // { resumen_adaptado, habilidades_destacadas, logros, cambios }
+    contacto: {},          // { telefono, correo, ciudad, enlace } — solo para el CV, no se envía a la IA
     preguntas: [],
     iPregunta: 0,
     puntajes: []
@@ -210,10 +218,13 @@
       return x && Array.isArray(x.habilidades) && x.habilidades.length > 0;
     });
 
+    const valor = function (sel) { return $(sel).value.trim(); };
+    estado.contacto = { telefono: valor("#in-telefono"), correo: valor("#in-correo"), ciudad: valor("#in-ciudad"), enlace: valor("#in-enlace") };
     estado.perfil = {
       nombre: nombre || r.nombre || "Tu nombre",
       edad: edad,
       historia: historia,
+      estudios: { escuela: valor("#in-escuela"), nivel: valor("#in-nivel"), periodo: valor("#in-periodo") },
       resumen_profesional: r.resumen_profesional,
       habilidades: r.habilidades
     };
@@ -471,19 +482,41 @@
 
     $("#lista-cambios").replaceChildren.apply($("#lista-cambios"), (cv.cambios || []).map(function (c) { return el("li", { text: c }); }));
 
-    // Versión para imprimir / guardar como PDF
-    $("#cv-imprimir").replaceChildren(
-      el("h1", { text: p.nombre }),
-      el("p", { class: "sub", text: "Postulación a " + v.puesto + " · " + v.empresa + " · " + v.ciudad + (p.edad ? " · " + p.edad + " años" : "") }),
-      el("h2", { text: "Perfil profesional" }),
-      el("p", { text: cv.resumen_adaptado }),
-      el("h2", { text: "Habilidades" }),
-      el("p", { text: cv.habilidades_destacadas.join(" · ") }),
-      el("h2", { text: "Experiencia y logros" }),
-      el("ul", null, cv.logros.map(function (l) { return el("li", { text: l }); })),
-      el("h2", { text: "Disponibilidad" }),
-      el("p", { text: v.jornada + " · " + v.modalidad + " · Inicio inmediato" })
-    );
+    // Versión para imprimir / guardar como PDF, con el mismo diseño que la plantilla LaTeX.
+    const imprimible = $("#cv-imprimir");
+    imprimible.replaceChildren.apply(imprimible, window.CvLatex.generarHtml(datosDelCV(), el));
+  }
+
+  // ---------- CV en LaTeX ----------
+  function datosDelCV() {
+    return window.CvLatex.datosCV(estado.perfil, estado.vacante, estado.cv, estado.contacto);
+  }
+
+  function nombreArchivoCV() {
+    const base = normalizar(estado.perfil.nombre).replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "") || "cv";
+    return "CV_" + base + ".tex";
+  }
+
+  function descargarLatex() {
+    const blob = new Blob([window.CvLatex.generarLatex(datosDelCV())], { type: "application/x-tex;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = el("a", { href: url, download: nombreArchivoCV() });
+    document.body.append(a);
+    a.click();
+    a.remove();
+    setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+    avisar("Listo: compílalo con pdflatex o súbelo a Overleaf.");
+  }
+
+  // Overleaf acepta un documento enviado por formulario (POST a /docs) y lo compila a PDF.
+  function abrirEnOverleaf() {
+    const form = el("form", { action: "https://www.overleaf.com/docs", method: "post", target: "_blank" },
+      el("input", { type: "hidden", name: "snip", value: window.CvLatex.generarLatex(datosDelCV()) }),
+      el("input", { type: "hidden", name: "snip_name", value: nombreArchivoCV() }),
+      el("input", { type: "hidden", name: "engine", value: "pdflatex" }));
+    document.body.append(form);
+    form.submit();
+    form.remove();
   }
 
   // ---------- Paso 4 → Entrenador ----------
@@ -621,8 +654,8 @@
   // ---------- Reinicio ----------
   function reiniciar() {
     estado.perfil = null; estado.recomendaciones = []; estado.vacante = null; estado.cv = null;
-    estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = [];
-    ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta"].forEach(function (s) { $(s).value = ""; });
+    estado.preguntas = []; estado.iPregunta = 0; estado.puntajes = []; estado.contacto = {};
+    ["#in-nombre", "#in-edad", "#in-historia", "#in-resumen", "#in-respuesta"].concat(CAMPOS_CV).forEach(function (s) { $(s).value = ""; });
     Object.keys(AGENTES).forEach(function (a) { marcarAgente(a, "espera"); });
     $("#bitacora").replaceChildren();
     irA(1);
@@ -643,6 +676,10 @@
       $("#in-nombre").value = EJEMPLO.nombre;
       $("#in-edad").value = EJEMPLO.edad;
       $("#in-historia").value = EJEMPLO.historia;
+      $("#in-ciudad").value = EJEMPLO.ciudad;
+      $("#in-escuela").value = EJEMPLO.escuela;
+      $("#in-nivel").value = EJEMPLO.nivel;
+      $("#in-periodo").value = EJEMPLO.periodo;
       $("#btn-analizar").focus();
     });
 
@@ -661,6 +698,8 @@
       avisar("Elige «Guardar como PDF» en la ventana de impresión.");
       setTimeout(function () { window.print(); }, 300);
     });
+    $("#btn-descargar-tex").addEventListener("click", descargarLatex);
+    $("#btn-overleaf").addEventListener("click", abrirEnOverleaf);
 
     const bEvaluar = $("#btn-evaluar");
     bEvaluar.addEventListener("click", conCarga(bEvaluar, "Evaluando…", evaluarRespuesta));

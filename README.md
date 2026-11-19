@@ -81,6 +81,7 @@ Hackaton/
 ├── css/estilos.css     # Estilos: paleta y tipografías para aprendizaje
 ├── js/
 │   ├── app.js          # Lógica de la interfaz, voz y conexión con los agentes
+│   ├── cv-latex.js     # CV con la plantilla LaTeX (.tex, Overleaf y versión imprimible)
 │   ├── motor-local.js  # Los 4 agentes simulados (modo demo, sin internet)
 │   └── vacantes.js     # 30 vacantes de ejemplo (empresas ficticias)
 ├── servidor.py         # Servidor local + agentes con Claude (opcional)
@@ -119,7 +120,11 @@ También incluye: **contraste WCAG AA**, tamaño base de 17 px, interlineado 1.6
 
 - **Navegador:** Chrome o Edge (recomendado para voz). Firefox funciona, pero sin dictado por voz.
 - **Voz:** el dictado usa la Web Speech API del navegador. En Chrome necesita internet y permiso de micrófono.
-- **PDF del CV:** "Descargar CV" abre la ventana de impresión; elijan **Guardar como PDF**.
+- **CV en LaTeX:** el CV adaptado usa una plantilla LaTeX de una página (secciones Perfil, Educación, Experiencia y Habilidades técnicas/blandas). En el paso 4 hay tres opciones:
+  - **Descargar CV (PDF):** abre la ventana de impresión con el mismo diseño de la plantilla; elijan **Guardar como PDF**.
+  - **Descargar LaTeX (.tex):** el archivo fuente para editarlo y compilarlo con `pdflatex`.
+  - **Abrir en Overleaf:** envía el `.tex` a overleaf.com, que genera el PDF (servicio externo).
+- **Datos del CV:** teléfono, correo, ciudad, enlace y estudios son opcionales (paso 1, «Datos para tu CV»). El contacto no se envía a la IA.
 - **Python 3.10+** solo para el servidor (opciones B y C).
 
 ## Roadmap (lo que va en "siguientes pasos" del pitch)
