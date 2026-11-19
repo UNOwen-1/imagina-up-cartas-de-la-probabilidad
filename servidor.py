@@ -403,8 +403,8 @@ class Manejador(SimpleHTTPRequestHandler):
     def cookie_sesion(token: str | None) -> str:
         if token is None:
             return f"{COOKIE_SESION}=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"
-        # Cookie de sesión (sin Max-Age): el navegador la borra al cerrarse, y la
-        # página llama a /api/cuenta/logout al salir.
+        # Cookie de sesión (sin Max-Age): el navegador la borra al cerrarse. Además, una
+        # pestaña nueva pide iniciar sesión (la página lo controla con sessionStorage).
         return f"{COOKIE_SESION}={token}; Path=/; HttpOnly; SameSite=Strict"
 
     def leer_json(self) -> dict:
