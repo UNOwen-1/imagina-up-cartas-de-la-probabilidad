@@ -25,10 +25,22 @@ Proyecto de hackatón · MVP funcional en una página web local.
 - **📄 Crear mi CV** (agentes 1–3): Tu historia → Tus habilidades → Proyectos y logros → Vacantes → **Tu CV**. Termina con el CV listo.
 - **🎤 Entrenar entrevista** (agente 4): una sola pantalla. Se elige la vacante y hay dos pestañas: **📚 Aprendizaje y práctica**, de consulta libre, y **🎯 Simulación**, la única parte secuencial. Se puede practicar para la vacante del CV actual, para un CV guardado en tu cuenta o para cualquier vacante del catálogo (contando brevemente tu historia), **sin necesidad de hacer el CV**.
   - **Aprendizaje y práctica (consulta libre):** basta con elegir la vacante; los apartados se abren en el orden que quieras. Incluye en qué se fijan las empresas de tecnología (fundamentos, pensar en voz alta, resolución de problemas, código limpio, GitHub, proyectos explicados a fondo, trabajo en equipo, inglés técnico, honestidad…), consejos para antes/durante/después, el método SAR con un ejemplo de tu historia, las habilidades que pide la vacante, errores comunes y preguntas para hacer al final. Además, una **práctica guiada** opcional de 3 preguntas con retroalimentación en cada respuesta, que se puede repetir cuando quieras.
-  - **Simulación (secuencial: inicio → 3 preguntas → resultado):** una entrevista de 3 preguntas distintas (presentación o proyecto, experiencia técnica y situacional técnica, por ejemplo un fallo en producción), seguidas y sin pistas. Al final: **calificación de 1 a 10**, lo que hiciste bien, **observaciones de mejora** y el detalle de cada respuesta. Cada nueva simulación usa otras preguntas.
+  - **🧮 Problemas tipo LeetCode (nivel junior):** 10 problemas fáciles (Suma de dos, Paréntesis válidos, Palíndromo, Anagrama, Comprar y vender, Duplicados, Búsqueda binaria, Invertir lista enlazada, Fusionar arreglos ordenados, Primer carácter único). Cada uno trae enunciado, ejemplos, pistas, un espacio para escribir tu explicación y recibir retroalimentación, y la solución: la lógica paso a paso, la complejidad y código de referencia en Python y JavaScript.
+  - **Simulación (secuencial: inicio → 3 preguntas → problema técnico → resultado):** una entrevista de 3 preguntas distintas (presentación o proyecto, experiencia técnica y situacional técnica, por ejemplo un fallo en producción) y, al final, **un problema tipo LeetCode** elegido al azar (sin repetir el de la simulación anterior), seguidos y sin pistas. El resultado incluye la solución de referencia del problema. Al final: **calificación de 1 a 10**, lo que hiciste bien, **observaciones de mejora** y el detalle de cada respuesta. Cada nueva simulación usa otras preguntas.
   - Con una vacante del catálogo, la historia («Cuéntanos de ti») solo se pide al empezar la práctica o la simulación; la información no la necesita.
 
 👤 **Humano en el circuito:** la IA propone y explica; la persona **aprueba, quita o agrega** en cada paso. La IA no inventa habilidades.
+
+---
+
+### ¿Por qué los problemas se responden explicando la lógica y no con un compilador?
+
+Despega evalúa **la explicación de la solución** (estructura de datos, pasos, casos borde y complejidad), no código ejecutado:
+- Es lo que se califica en las entrevistas técnicas para puestos junior: **pensar en voz alta** y justificar decisiones.
+- Las vacantes piden lenguajes distintos (Python, Java, C++, C#, JavaScript…); explicar la lógica sirve para todos.
+- La página sigue funcionando sin servidor ni internet: un juez necesitaría descargar intérpretes pesados (por ejemplo Pyodide para Python) y ejecutar código de forma aislada.
+
+Con IA real, el Entrenador evalúa la explicación contra la solución de referencia y acepta otros enfoques correctos. En modo demo se usa una heurística (idea clave del problema, pasos específicos, complejidad y casos borde). Todas las soluciones de referencia se verificaron con casos de prueba.
 
 ---
 
@@ -89,6 +101,7 @@ Hackaton/
 │   ├── app.js          # Lógica de la interfaz, voz, cuentas y conexión con los agentes
 │   ├── cuentas.js      # Cuentas: en el navegador (localStorage) o en el servidor si está corriendo
 │   ├── cv-latex.js     # CV con la plantilla LaTeX (.tex, Overleaf y versión imprimible)
+│   ├── problemas.js    # 10 problemas tipo LeetCode con pistas, solución explicada y código
 │   ├── motor-local.js  # Los 4 agentes simulados (modo demo, sin internet)
 │   └── vacantes.js     # 30 vacantes de tecnología (empresas ficticias inspiradas en tipos de empresas reales)
 ├── servidor.py         # Servidor local + agentes con Claude (opcional) + API de cuentas

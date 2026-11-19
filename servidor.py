@@ -207,7 +207,9 @@ AGENTES = {
             "el perfil de una persona estudiante o recién egresada de ciencias computacionales y sus respuestas a 3 preguntas. "
             "Evalúa la entrevista como lo haría una persona reclutadora o líder técnico para un puesto junior (claridad "
             "técnica, ejemplos de proyectos concretos, razonamiento al resolver problemas, resultados, trabajo en equipo, "
-            "conocimiento de la empresa y disposición a aprender). Da 'calificacion' (entero de 1 a 10, honesto pero alentador), "
+            "conocimiento de la empresa y disposición a aprender). La última respuesta puede ser un problema técnico "
+            "(tipo 'problema'): la persona explica en palabras la lógica de su solución; evalúala contra 'solucion_referencia' "
+            "(idea clave, pasos, casos borde y complejidad) y acepta otros enfoques correctos aunque sean distintos. Da 'calificacion' (entero de 1 a 10, honesto pero alentador), "
             "'veredicto' (1 frase), 'fortalezas' (2 a 4 frases concretas sobre lo que hizo bien, citando sus respuestas), "
             "'mejoras' (2 a 4 observaciones de mejora accionables, por ejemplo el método situación–acción–resultado) y "
             "'por_pregunta' (una entrada por respuesta, en el mismo orden, con 'puntaje' entero de 1 a 5 y 'comentario' "
@@ -231,6 +233,27 @@ AGENTES = {
                 },
             },
             "required": ["calificacion", "veredicto", "fortalezas", "mejoras", "por_pregunta"],
+            "additionalProperties": False,
+        },
+    },
+    "entrenador_problema": {
+        "sistema": (
+            "Eres el Agente Entrenador de entrevistas técnicas de Despega. Recibes un problema de programación de nivel "
+            "junior (tipo LeetCode fácil), su solución de referencia y la explicación que escribió una persona estudiante "
+            "o recién egresada: no es código ejecutable, sino la lógica de su solución. Evalúa como en una entrevista "
+            "técnica: idea clave y corrección, pasos claros, casos borde y complejidad en tiempo y espacio. Acepta enfoques "
+            "distintos al de referencia si son correctos (si son menos eficientes, dilo con amabilidad). Da 'puntaje' "
+            "(entero de 1 a 5), 'lo_bueno' (1–2 frases concretas) y 'mejorar' (1–2 consejos accionables; si la idea es "
+            "incorrecta, da una pista sin revelar toda la solución). " + REGLAS_COMUNES
+        ),
+        "esquema": {
+            "type": "object",
+            "properties": {
+                "puntaje": {"type": "integer"},
+                "lo_bueno": {"type": "string"},
+                "mejorar": {"type": "string"},
+            },
+            "required": ["puntaje", "lo_bueno", "mejorar"],
             "additionalProperties": False,
         },
     },
