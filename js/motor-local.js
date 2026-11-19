@@ -158,6 +158,165 @@
     };
   }
 
+
+  // ---------- Pulido de estilo para el CV ----------
+  // El CV no transcribe lo que escribió la persona: corrige el estilo (verbo de acción al inicio,
+  // mayúsculas, nombres de tecnologías, puntuación) y amplía un poco las frases muy breves,
+  // siempre con datos que ya están en su historia o en su proyecto (no inventa nada).
+  const TECNOLOGIAS = [
+    ["javascript", "JavaScript"], ["typescript", "TypeScript"], ["python", "Python"], ["java", "Java"],
+    ["github", "GitHub"], ["gitlab", "GitLab"], ["git", "Git"], ["postgresql", "PostgreSQL"], ["postgres", "Postgres"],
+    ["mysql", "MySQL"], ["mongodb", "MongoDB"], ["sqlite", "SQLite"], ["sql server", "SQL Server"], ["sql", "SQL"],
+    ["fastapi", "FastAPI"], ["django", "Django"], ["flask", "Flask"], ["spring boot", "Spring Boot"],
+    ["react native", "React Native"], ["react", "React"], ["angular", "Angular"], ["vue", "Vue"],
+    ["next.js", "Next.js"], ["node.js", "Node.js"], ["nodejs", "Node.js"], ["express", "Express"],
+    ["docker", "Docker"], ["kubernetes", "Kubernetes"], ["aws", "AWS"], ["azure", "Azure"], ["gcp", "GCP"],
+    ["firebase", "Firebase"], ["linux", "Linux"], ["html", "HTML"], ["css", "CSS"], ["tailwind", "Tailwind"],
+    ["api rest", "API REST"], ["apis", "APIs"], ["api", "API"], ["json", "JSON"], ["c\\+\\+", "C++"], ["c#", "C#"],
+    [".net", ".NET"], ["kotlin", "Kotlin"], ["swift", "Swift"], ["flutter", "Flutter"], ["android", "Android"],
+    ["ios", "iOS"], ["tensorflow", "TensorFlow"], ["pytorch", "PyTorch"], ["scikit-learn", "scikit-learn"],
+    ["power bi", "Power BI"], ["excel", "Excel"], ["scrum", "Scrum"], ["jira", "Jira"], ["codeforces", "Codeforces"],
+    ["leetcode", "LeetCode"], ["hackerrank", "HackerRank"], ["discord", "Discord"], ["unity", "Unity"], ["jest", "Jest"], ["ci/cd", "CI/CD"]
+  ].map(function (t) {
+    const patron = t[0].replace(/[.\/]/g, "\\$&");
+    return [new RegExp("(^|[^\\wáéíóúñ.#+])" + patron + "(?![\\wáéíóúñ#+]|\\.\\w)", "gi"), t[1]];
+  });
+
+  function capitalizar(t) { return t ? t.charAt(0).toUpperCase() + t.slice(1) : t; }
+
+  function corregirTecnologias(t) {
+    TECNOLOGIAS.forEach(function (par) { t = t.replace(par[0], function (m, antes) { return antes + par[1]; }); });
+    return t;
+  }
+
+  // Acentos que se omiten con frecuencia al escribir rápido (incluye verbos en pasado en primera persona).
+  const ACENTOS = {
+    tambien: "también", pagina: "página", paginas: "páginas", tia: "tía", tio: "tío", dia: "día", dias: "días",
+    codigo: "código", logica: "lógica", analisis: "análisis", metodo: "método", metodos: "métodos",
+    numero: "número", numeros: "números", basico: "básico", basicos: "básicos", facil: "fácil", util: "útil",
+    utiles: "útiles", rapido: "rápido", tecnologia: "tecnología", tecnologias: "tecnologías",
+    ingenieria: "ingeniería", informatica: "informática", electronica: "electrónica", academico: "académico",
+    academicos: "académicos", categoria: "categoría", hackaton: "hackatón", practicas: "prácticas",
+    estadistica: "estadística", matematicas: "matemáticas", publico: "público", graficos: "gráficos",
+    grafica: "gráfica", modulo: "módulo", modulos: "módulos", automaticamente: "automáticamente",
+    programe: "programé", desarrolle: "desarrollé", implemente: "implementé", disene: "diseñé", diseñe: "diseñé",
+    cree: "creé", trabaje: "trabajé", participe: "participé", lidere: "lideré", colabore: "colaboré", gane: "gané",
+    termine: "terminé", construi: "construí", aprendi: "aprendí", automatice: "automaticé", optimice: "optimicé",
+    configure: "configuré", integre: "integré", migre: "migré", documente: "documenté", publique: "publiqué",
+    coordine: "coordiné", organice: "organicé", analice: "analicé", entrene: "entrené", ayude: "ayudé",
+    administre: "administré", logre: "logré"
+  };
+
+  function corregirOrtografia(t) {
+    return t
+      .replace(/[a-zñ]+/gi, function (w) {
+        const c = ACENTOS[w.toLowerCase()];
+        if (c) return /^[A-ZÑ]/.test(w) ? capitalizar(c) : c;
+        return w.replace(/cion$/i, "ción");
+      })
+      .replace(/(^|\s)se (usar|utilizar|manejar|programar)(?![\wáéíóúñ])/gi, "$1sé $2");
+  }
+
+  function limpiarTexto(t) {
+    return String(t || "")
+      .replace(/\s+/g, " ")
+      .replace(/\s+([,.;:!?)])/g, "$1")
+      .replace(/([,;:])(?=[^\s\d\/])/g, "$1 ")
+      .replace(/([.!?])\1+/g, "$1")
+      .replace(/(\.\.\.|…)\s*$/, "")
+      .replace(/\(\s+/g, "(")
+      .replace(/^(pues|bueno|o sea|este|yo|también|tambien|además|ademas)[,\s]+/i, "")
+      .trim();
+  }
+
+  // Frase de CV: contexto al final, verbo al inicio. Ej.:
+  // «en mis prácticas en una startup desarrollé una api en python» →
+  // «Desarrollé una API en Python (prácticas en una startup).»
+  const CONTEXTO = /^((?:en|durante|como parte de)\s+(?:mis|mi|el|la|los|las|un|una|nuestro|nuestra)?\s*)([^,]{3,80}?)\s*,?\s+(?=(?!(?:aqu|all|ah|as)[íi](?![\wáéíóúñ]))[a-záéíóúñ]+[éí](?![\wáéíóúñ])|(?:mi|nuestro)\s+equipo(?![\wáéíóúñ]))/i;
+
+  function pulirFrase(texto) {
+    let t = limpiarTexto(corregirOrtografia(limpiarTexto(texto)))
+      .replace(/^sé (usar|utilizar|manejar|programar en)\s+/i, "Manejo ");
+    if (!t) return "";
+    let contexto = "";
+    const c = t.match(CONTEXTO);
+    // «En mis prácticas en una startup» → «prácticas en una startup»; «En la escuela» se queda completo.
+    if (c) { contexto = /\s/.test(c[2].trim()) ? c[2] : (c[1] + c[2]).trim(); t = t.slice(c[0].length); }
+    t = t.replace(/^mi\s+((?:proyecto|tesis)[^,;]{0,60}?)\s+fue\s+(un|una|el|la)\s+/i, function (m, que, art) {
+      if (!contexto) contexto = que;
+      return "Desarrollé " + art.toLowerCase() + " ";
+    });
+    // «mi equipo entrenó…» → «En equipo, entrenamos…» (en primera persona, sin atribuirse el trabajo de otros).
+    t = t.replace(/^(?:mi|nuestro)\s+equipo\s+(?:y yo\s+)?([a-záéíóúñ]+)ó(?![\wáéíóúñ])/i, function (m, raiz) {
+      const r = raiz.toLowerCase();
+      return "En equipo, " + (/[iy]$/.test(r) ? r.slice(0, -1) + "imos" : r + "amos");
+    });
+    t = corregirTecnologias(t).replace(/\s*;\s*/g, ". ").replace(/\.$/, "");
+    if (contexto) {
+      const fin = t.indexOf(". ");
+      const ctx = " (" + corregirTecnologias(contexto.charAt(0).toLowerCase() + contexto.slice(1)) + ")";
+      t = fin === -1 ? t + ctx : t.slice(0, fin) + ctx + t.slice(fin);
+    }
+    t = capitalizar(t).replace(/([.!?]\s+)([a-záéíóúñ])/g, function (m, a, b) { return a + b.toUpperCase(); });
+    return /[.!?]$/.test(t) ? t : t + ".";
+  }
+
+  function palabrasDe(t) { return String(t || "").split(/\s+/).filter(Boolean).length; }
+
+  // Si la frase es muy breve, la completa con las habilidades que demuestra (si no las nombra ya).
+  function ampliarFrase(frase, nombres) {
+    if (palabrasDe(frase) >= 12) return frase;
+    const n = normalizar(frase);
+    // Una habilidad cuenta como mencionada si aparece cualquiera de sus partes («Git y GitHub» → git, github).
+    const faltan = nombres.filter(function (x) {
+      return !normalizar(x).split(/\s+y\s+|[\/,()]/).map(function (s) { return s.trim(); }).filter(Boolean)
+        .some(function (parte) { return n.indexOf(parte) !== -1; });
+    });
+    if (!faltan.length) return frase;
+    return frase.replace(/\.$/, "") + ", fortaleciendo mis habilidades de " + lista(faltan.map(enFrase)) + ".";
+  }
+
+  function pulirHerramientas(t) {
+    return String(t || "").split(/\s*(?:,|;|\/|\s+y\s+)\s*/).map(function (x) {
+      const h = corregirTecnologias(limpiarTexto(x));
+      return /\.\w/.test(h) ? h : capitalizar(h);  // «discord.py» se queda como está
+    })
+      .filter(Boolean).join(", ");
+  }
+
+  function pulirProyecto(p) {
+    const herramientas = pulirHerramientas(p.herramientas);
+    let descripcion = (p.descripcion || []).map(pulirFrase).filter(Boolean);
+    if (descripcion.length === 1 && herramientas && palabrasDe(descripcion[0]) < 10) {
+      // Una sola línea breve: se completa con las tecnologías del proyecto que no menciona.
+      const n = normalizar(descripcion[0]);
+      const faltan = herramientas.split(", ").filter(function (h) { return n.indexOf(normalizar(h)) === -1; });
+      if (faltan.length) descripcion[0] = descripcion[0].replace(/\.$/, "") + " con " + lista(faltan) + ".";
+    }
+    if (!descripcion.length && herramientas) descripcion = ["Proyecto desarrollado con " + lista(herramientas.split(", ")) + "."];
+    return {
+      nombre: capitalizar(corregirTecnologias(corregirOrtografia(limpiarTexto(p.nombre)))),
+      herramientas: herramientas,
+      fecha: limpiarTexto(p.fecha),
+      descripcion: descripcion
+    };
+  }
+
+  function pulirReconocimiento(l) {
+    return {
+      titulo: capitalizar(corregirTecnologias(corregirOrtografia(limpiarTexto(l.titulo)))).replace(/\.$/, ""),
+      detalle: capitalizar(corregirTecnologias(corregirOrtografia(limpiarTexto(l.detalle)))).replace(/\.$/, ""),
+      fecha: limpiarTexto(l.fecha)
+    };
+  }
+
+  // Oraciones completas de la historia (la evidencia del Perfilador puede venir recortada).
+  function oracionCompleta(historia, evidencia) {
+    const base = normalizar(String(evidencia || "").replace(/…$/, "")).trim();
+    const oraciones = String(historia || "").split(/(?<=[.!?])\s+|\n+/).map(function (o) { return o.trim(); }).filter(Boolean);
+    return oraciones.find(function (o) { return base && normalizar(o).indexOf(base) !== -1; }) || evidencia;
+  }
+
   // ---------- Agente 3: Adaptador de CV ----------
   function adaptador(datos) {
     const perfil = datos.perfil;
@@ -174,20 +333,22 @@
       lista(claves.map(function (h) { return enFrase(h.nombre); })) +
       ", que he aplicado en proyectos académicos, prácticas y proyectos personales. Me interesa sumarme a su equipo, aprender de código en producción y crecer como ingeniero(a) de software.";
 
-    // Una viñeta por evidencia: si varias habilidades salen de la misma frase, se nombran juntas.
+    // Una viñeta por oración de la historia (si varias habilidades salen de la misma, se juntan),
+    // con el estilo corregido y ampliada solo si es muy breve.
     const grupos = [];
     ordenadas.forEach(function (h) {
-      const g = grupos.find(function (x) { return x.evidencia === h.evidencia; });
-      if (g) g.nombres.push(h.nombre); else grupos.push({ evidencia: h.evidencia, nombres: [h.nombre] });
+      if (/^(Estás|Lo contaste)/.test(h.evidencia)) return;  // evidencias genéricas, no son de la historia
+      const oracion = oracionCompleta(perfil.historia, h.evidencia);
+      const g = grupos.find(function (x) { return x.oracion === oracion; });
+      if (g) g.nombres.push(h.nombre); else grupos.push({ oracion: oracion, nombres: [h.nombre] });
     });
-    const logros = grupos.slice(0, 4).map(function (g) {
-      return lista(g.nombres) + ": " + g.evidencia.charAt(0).toUpperCase() + g.evidencia.slice(1);
-    });
+    const logros = grupos.slice(0, 4).map(function (g) { return ampliarFrase(pulirFrase(g.oracion), g.nombres); });
 
     const cambios = [
       "Puse primero las habilidades que pide la vacante (" + (relevantes.map(function (h) { return h.nombre; }).join(", ") || "las más cercanas al puesto") + ").",
       "Reescribí tu resumen mencionando el puesto y la empresa.",
-      "Convertí tus proyectos y experiencias en logros concretos con evidencia."
+      "Convertí tus experiencias en logros concretos con evidencia de tu historia.",
+      "Corregí el estilo de tus textos (verbo de acción al inicio, mayúsculas, nombres de tecnologías y puntuación) y amplié un poco las frases muy breves, sin inventar datos."
     ];
     const faltan = v.habilidades.filter(function (h) {
       return !perfil.habilidades.some(function (p) { return normalizar(p.nombre) === normalizar(h); });
@@ -198,6 +359,8 @@
       resumen_adaptado: resumen,
       habilidades_destacadas: ordenadas.map(function (h) { return h.nombre; }),
       logros: logros,
+      proyectos: (perfil.proyectos || []).map(pulirProyecto),
+      reconocimientos: (perfil.reconocimientos || []).map(pulirReconocimiento),
       cambios: cambios
     };
   }

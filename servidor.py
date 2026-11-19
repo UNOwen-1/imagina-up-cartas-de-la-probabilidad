@@ -155,6 +155,14 @@ AGENTES = {
             "'habilidades_destacadas' (máximo 6 nombres, primero las que pide la vacante), 'logros' (3 a 4 viñetas que "
             "empiecen con un verbo de acción, nombren la tecnología usada y cuantifiquen el resultado solo si el dato está "
             "en su perfil; usa solo hechos de su perfil) "
+            "No transcribas lo que escribió la persona: redacta con estilo profesional de CV (verbo de acción en primera "
+            "persona al inicio, sin muletillas, mayúsculas y nombres de tecnologías bien escritos, puntuación correcta) y, "
+            "solo si una frase es muy breve, amplíala un poco con el contexto o la habilidad que demuestra, sin inventar "
+            "datos, cifras ni tecnologías. Aplica lo mismo a 'proyectos' y 'reconocimientos': devuelve uno por cada "
+            "elemento del perfil, en el mismo orden y sin agregar ni quitar; en proyectos conserva el nombre (corrigiendo "
+            "su estilo), 'herramientas' como lista separada por comas, la misma 'fecha' y 'descripcion' con 1 a 3 viñetas "
+            "pulidas; en reconocimientos corrige 'titulo' y 'detalle' y conserva la 'fecha'. Si el perfil no trae "
+            "proyectos o reconocimientos, devuelve listas vacías; "
             "y 'cambios' (3 a 4 frases que expliquen qué cambiaste y por qué; si la vacante pide algo que la persona no "
             "tiene, explica que no lo agregaste para no inventar). Si el perfil incluye 'proyectos' o 'reconocimientos', "
             "esos ya aparecen en sus propias secciones del CV: no los copies en 'logros', aunque puedes mencionarlos en "
@@ -166,9 +174,36 @@ AGENTES = {
                 "resumen_adaptado": {"type": "string"},
                 "habilidades_destacadas": {"type": "array", "items": {"type": "string"}},
                 "logros": {"type": "array", "items": {"type": "string"}},
+                "proyectos": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "nombre": {"type": "string"},
+                            "herramientas": {"type": "string"},
+                            "fecha": {"type": "string"},
+                            "descripcion": {"type": "array", "items": {"type": "string"}},
+                        },
+                        "required": ["nombre", "herramientas", "fecha", "descripcion"],
+                        "additionalProperties": False,
+                    },
+                },
+                "reconocimientos": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "titulo": {"type": "string"},
+                            "detalle": {"type": "string"},
+                            "fecha": {"type": "string"},
+                        },
+                        "required": ["titulo", "detalle", "fecha"],
+                        "additionalProperties": False,
+                    },
+                },
                 "cambios": {"type": "array", "items": {"type": "string"}},
             },
-            "required": ["resumen_adaptado", "habilidades_destacadas", "logros", "cambios"],
+            "required": ["resumen_adaptado", "habilidades_destacadas", "logros", "proyectos", "reconocimientos", "cambios"],
             "additionalProperties": False,
         },
     },
